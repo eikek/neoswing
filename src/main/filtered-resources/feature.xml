@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~ Copyright (c) 2012 Eike Kettner
+  ~
+  ~ This file is part of NeoSwing.
+  ~
+  ~ NeoSwing is free software: you can redistribute it and/or modify
+  ~ it under the terms of the GNU General Public License as published by
+  ~ the Free Software Foundation, either version 3 of the License, or
+  ~ (at your option) any later version.
+  ~
+  ~ NeoSwing is distributed in the hope that it will be useful,
+  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  ~ GNU General Public License for more details.
+  ~
+  ~ You should have received a copy of the GNU General Public License
+  ~ along with NeoSwing.  If not, see <http://www.gnu.org/licenses/>.
+  -->
+
+<features name="neoswing-${project.version}" xmlns="http://karaf.apache.org/xmlns/features/v1.0.0">
+
+  <feature name="jung" version="${jung.version}">
+    <bundle dependency="true">
+      wrap:mvn:net.sourceforge.collections/collections-generic/4.01$Bundle-Name=SourceForge Generic Collections&amp;Bundle-SymbolicName=net.sourceforge.collections.collections-generic&amp;Export-Package=*;version=4.01.0&amp;Bundle-Version=4.01.0
+    </bundle>
+    <bundle dependency="true">
+      wrap:mvn:concurrent/concurrent/1.3.4$Bundle-Name=Concurrent&amp;Bundle-SymbolicName=concurrent.concurrent&amp;Export-Package=*;version=1.3.4&amp;Bundle-Version=1.3.4
+    </bundle>
+    <bundle dependency="true">
+      wrap:mvn:colt/colt/1.2.0$Bundle-Name=Colt Library&amp;Bundle-SymbolicName=colt.colt&amp;Export-Package=*;version=1.2.0&amp;Bundle-Version=1.2.0
+    </bundle>
+
+    <bundle>
+      wrap:mvn:net.sf.jung/jung-algorithms/${jung.version}$DynamicImport-Package=*&amp;Bundle-Name=JUNG Algorithms&amp;Bundle-SymbolicName=net.sf.jung.jung-algorithms&amp;Export-Package=*;version=${jung.version}&amp;Bundle-Version=${jung.version}
+    </bundle>
+    <bundle>
+      wrap:mvn:net.sf.jung/jung-visualization/${jung.version}$DynamicImport-Package=*&amp;Bundle-Name=JUNG Visualization&amp;Bundle-SymbolicName=net.sf.jung.jung-visualization&amp;Export-Package=*;version=${jung.version}&amp;Bundle-Version=${jung.version}
+    </bundle>
+    <bundle>
+      wrap:mvn:net.sf.jung/jung-io/${jung.version}$DynamicImport-Package=*&amp;Bundle-Name=JUNG IO&amp;Bundle-SymbolicName=net.sf.jung.jung-io&amp;Export-Package=*;version=${jung.version}&amp;Bundle-Version=${jung.version}
+    </bundle>
+    <bundle>mvn:org.alainn.osgi.bundles/net.sf.jung.bundle/${jung.bundle.version}</bundle>
+  </feature>
+
+  <feature name="neoswing" version="${project.version}">
+    <feature version="${jung.version}">jung</feature>
+    <bundle>mvn:org.eknet.neoswing/neoswing/${project.version}</bundle>
+  </feature>
+
+</features>
+
