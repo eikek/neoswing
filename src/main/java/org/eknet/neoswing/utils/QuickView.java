@@ -19,7 +19,7 @@
 
 package org.eknet.neoswing.utils;
 
-import org.eknet.neoswing.view.GraphPanel;
+import org.eknet.neoswing.view.GraphViewer;
 import org.jetbrains.annotations.NotNull;
 import org.neo4j.graphdb.GraphDatabaseService;
 
@@ -44,7 +44,7 @@ public final class QuickView {
    * @param db
    */
   public static void show(@NotNull GraphDatabaseService db) {
-    GraphPanel gp = new GraphPanel(db);
+    GraphViewer gp = new GraphViewer(db);
     JFrame frame = new JFrame("NeoSwing");
     frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
     frame.setIconImage(NeoSwingUtil.getFrameIcon());
@@ -61,7 +61,7 @@ public final class QuickView {
    * @param db
    */
   public static void showModal(@NotNull GraphDatabaseService db) {
-    GraphPanel gp = new GraphPanel(db);
+    GraphViewer gp = new GraphViewer(db);
     Dialog dialog = new Dialog("NeoSwing");
     dialog.setContent(gp);
     dialog.setIcon(NeoSwingUtil.getFrameIcon());
