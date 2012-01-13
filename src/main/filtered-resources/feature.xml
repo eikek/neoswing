@@ -32,19 +32,22 @@
     </bundle>
 
     <bundle>
-      wrap:mvn:net.sf.jung/jung-algorithms/${jung.version}$DynamicImport-Package=*&amp;Bundle-Name=JUNG Algorithms&amp;Bundle-SymbolicName=net.sf.jung.jung-algorithms&amp;Export-Package=*;version=${jung.version}&amp;Bundle-Version=${jung.version}
+      wrap:mvn:net.sf.jung/jung-api/${jung.version}$Bundle-Name=JUNG API&amp;Bundle-SymbolicName=net.sf.jung.jung-api&amp;Export-Package=edu.uci.ics.jung.*;version=${jung.version}&amp;Bundle-Version=${jung.version}
+    </bundle>
+    <bundle>
+      wrap:mvn:net.sf.jung/jung-graph-impl/${jung.version}$Bundle-Name=JUNG Graph Impl&amp;Bundle-SymbolicName=net.sf.jung.jung-graph-impl&amp;Export-Package=edu.uci.ics.jung.*;version=${jung.version}&amp;Bundle-Version=${jung.version}
     </bundle>
     <bundle>
       wrap:mvn:net.sf.jung/jung-visualization/${jung.version}$DynamicImport-Package=*&amp;Bundle-Name=JUNG Visualization&amp;Bundle-SymbolicName=net.sf.jung.jung-visualization&amp;Export-Package=*;version=${jung.version}&amp;Bundle-Version=${jung.version}
     </bundle>
     <bundle>
-      wrap:mvn:net.sf.jung/jung-io/${jung.version}$DynamicImport-Package=*&amp;Bundle-Name=JUNG IO&amp;Bundle-SymbolicName=net.sf.jung.jung-io&amp;Export-Package=*;version=${jung.version}&amp;Bundle-Version=${jung.version}
+      wrap:mvn:net.sf.jung/jung-algorithms/${jung.version}$Bundle-Name=JUNG Algorithms&amp;Bundle-SymbolicName=net.sf.jung.jung-algorithms&amp;Export-Package=*;version=${jung.version}&amp;Bundle-Version=${jung.version}
     </bundle>
-    <bundle>mvn:org.alainn.osgi.bundles/net.sf.jung.bundle/${jung.bundle.version}</bundle>
   </feature>
 
   <feature name="neoswing" version="${project.version}">
     <feature version="${jung.version}">jung</feature>
+    <bundle dependency="true">mvn:org.neo4j/neo4j-osgi-bundle/${neo4j.bundle.version}</bundle>
     <bundle>mvn:org.eknet.neoswing/neoswing/${project.version}</bundle>
   </feature>
 
