@@ -50,7 +50,7 @@ public class NeoSwing {
 
   public NeoSwing(ComponentFactory componentFactory) {
     this.componentFactory = componentFactory;
-    this.frame = new JFrame("NeoSwing");
+    this.frame = new JFrame(NeoSwingUtil.getApplicationName() + " - " + NeoSwingUtil.getApplicationVersion());
   }
 
   /**

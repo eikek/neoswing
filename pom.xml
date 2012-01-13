@@ -28,7 +28,7 @@
   <version>1.0.1-SNAPSHOT</version>
   <packaging>bundle</packaging>
 
-  <name>neoswing</name>
+  <name>NeoSwing</name>
   <url>https://github.com/eikek/neoswing</url>
 
   <licenses>
@@ -41,6 +41,7 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <maven.build.timestamp.format>yyyy-MM-dd HH:mmZ</maven.build.timestamp.format>
+    <build.timestamp>${maven.build.timestamp}</build.timestamp>
     <guava.version>11.0.0</guava.version>
     <neo4j.version>1.5</neo4j.version>
     <karaf.version>2.2.5</karaf.version>
@@ -117,6 +118,10 @@
     <resources>
       <resource>
         <directory>src/main/resources</directory>
+      </resource>
+      <resource>
+        <directory>src/main/filtered-resources</directory>
+        <filtering>true</filtering>
       </resource>
     </resources>
     <pluginManagement>

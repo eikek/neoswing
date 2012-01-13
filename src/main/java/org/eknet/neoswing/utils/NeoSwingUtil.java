@@ -45,7 +45,9 @@ import java.awt.event.ActionEvent;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.FilenameFilter;
+import java.io.IOException;
 import java.net.URL;
+import java.util.Properties;
 
 /**
  * @author <a href="mailto:eike.kettner@gmail.com">Eike Kettner</a>
@@ -53,14 +55,55 @@ import java.net.URL;
  */
 public final class NeoSwingUtil {
   private static final Logger log = LoggerFactory.getLogger(NeoSwingUtil.class);
+  
   private static boolean jideAvailable;
-
+  private static Properties neoswingProperties = new Properties();
+  
   static {
     jideAvailable = checkForJide();
+
+    URL url = NeoSwingUtil.class.getResource("/org/eknet/neoswing/neoswing.properties");
+    if (url != null) {
+      try {
+        neoswingProperties.load(url.openStream());
+      } catch (IOException e) {
+        log.warn("Error loading neoswing.properties.");
+      }
+    }
   }
 
+  
+  
   private NeoSwingUtil() {}
 
+  public static String getApplicationName() {
+    String name = neoswingProperties.getProperty("app.name");
+    if (name == null || name.trim().isEmpty()) {
+      return "neoswing";
+    }
+    if (name.equals("${project.name}")) {
+      return "neoswing";
+    }
+    return name;
+  }
+  
+  public static String getApplicationVersion() {
+    String version = neoswingProperties.getProperty("app.version");
+    if (version == null) {
+      return "";
+    }
+    if (version.equals("${project.version}")) {
+      return "dev";
+    }
+    if (version.endsWith("SNAPSHOT")) {
+      String timestamp = neoswingProperties.getProperty("build.timestamp");
+      if (timestamp != null) {
+        version += " (" + timestamp + ")";
+      }
+    }
+    return version;
+  }
+  
   public static ComponentFactory getFactory(boolean useJideIfAvailable) {
     if (useJideIfAvailable) {
       if (isJideAvailable()) {
