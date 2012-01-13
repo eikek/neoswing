@@ -125,6 +125,10 @@ public class GraphViewer extends JPanel implements GraphModel {
     add(msplit, BorderLayout.CENTER);
   }
 
+  public void close() {
+    graphPanel.getDatabase().shutdown();
+  }
+
   @Override
   @NotNull
   public Graph<Node, Relationship> getGraph() {

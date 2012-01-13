@@ -27,6 +27,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.kernel.EmbeddedGraphDatabase;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.swing.AbstractAction;
 import javax.swing.JButton;
@@ -36,8 +38,7 @@ import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
 import javax.swing.JToolBar;
 import javax.swing.SwingConstants;
-import java.awt.BorderLayout;
-import java.awt.Window;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.io.File;
 import java.util.prefs.Preferences;
@@ -47,7 +48,7 @@ import java.util.prefs.Preferences;
  * @since 12.01.12 17:44
  */
 public class MultiGraphViewer extends JPanel {
-
+  private final static Logger log = LoggerFactory.getLogger(MultiGraphViewer.class);
   private final static Preferences prefs = Preferences.userNodeForPackage(NeoSwing.class);
   
   private final ComponentFactory factory;
@@ -79,6 +80,20 @@ public class MultiGraphViewer extends JPanel {
     bar.add(openButton);
 
     return bar;
+  }
+
+  public void close() {
+    for (int i = 0; i < graphs.getTabCount(); i++) {
+      Component c = graphs.getTabComponentAt(i);
+      if (!(c instanceof GraphViewer)) {
+        c = graphs.getComponentAt(i);
+      }
+      if (c instanceof GraphViewer) {
+        GraphViewer viewer = (GraphViewer) c;
+        log.info("Closing viewer " + i + " ...");
+        viewer.close();
+      }
+    }
   }
 
   public void openDatabase(@NotNull GraphDatabaseService db, @Nullable String name) {

@@ -98,6 +98,13 @@ public class NeoSwing {
     }
   }
 
+  public void close() {
+    if (this.frame != null) {
+      this.frame.setVisible(false);
+      this.browser.close();
+      this.frame.dispose();
+    }
+  }
 
   public static void main(String[] args) {
     File db = null;
