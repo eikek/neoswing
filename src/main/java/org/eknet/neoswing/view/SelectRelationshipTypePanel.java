@@ -24,11 +24,8 @@ import org.neo4j.graphdb.DynamicRelationshipType;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.RelationshipType;
 
-import javax.swing.BoxLayout;
-import javax.swing.JComboBox;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import java.awt.FlowLayout;
+import javax.swing.*;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -44,11 +41,13 @@ public class SelectRelationshipTypePanel extends JPanel {
     BoxLayout boxl = new BoxLayout(this, BoxLayout.Y_AXIS);
     setLayout(boxl);
 
-    JPanel top = new JPanel(new FlowLayout(FlowLayout.LEADING));
+    JPanel top = factory.createPanel();
+    top.setLayout(new FlowLayout(FlowLayout.LEADING));
     add(top);
     top.add(new JLabel("Please choose or enter relationship type"));
 
-    JPanel input = new JPanel(new FlowLayout(FlowLayout.CENTER));
+    JPanel input = factory.createPanel();
+    input.setLayout(new FlowLayout(FlowLayout.CENTER));
     add(input);
 
     Iterable<RelationshipType> types = db.getRelationshipTypes();

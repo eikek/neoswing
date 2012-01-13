@@ -29,15 +29,9 @@ import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.RelationshipType;
 
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTable;
-import javax.swing.ListSelectionModel;
+import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
-import java.awt.BorderLayout;
-import java.awt.FlowLayout;
-import java.awt.Font;
+import java.awt.*;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.util.ArrayList;
@@ -88,7 +82,8 @@ public class RelationTypesPanel extends JPanel {
   }
 
   private JPanel createHeadPanel() {
-    JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEADING));
+    JPanel panel = factory.createPanel();
+    panel.setLayout(new FlowLayout(FlowLayout.LEADING));
     infoLabel = factory.createLabel();
     infoLabel.setFont(infoLabel.getFont().deriveFont(Font.BOLD));
     panel.add(infoLabel);

@@ -21,22 +21,19 @@ package org.eknet.neoswing;
 
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.Action;
-import javax.swing.JButton;
-import javax.swing.JComboBox;
-import javax.swing.JComponent;
-import javax.swing.JLabel;
-import javax.swing.JPopupMenu;
-import javax.swing.JTabbedPane;
-import javax.swing.JTable;
-import javax.swing.JTextField;
-import javax.swing.JToolBar;
+import javax.swing.*;
 
 /**
  * @author <a href="mailto:eike.kettner@gmail.com">Eike Kettner</a>
  * @since 10.01.12 18:49
  */
 public interface ComponentFactory {
+
+  @NotNull
+  JPanel createPanel();
+
+  @NotNull
+  JSplitPane createSplitPane();
 
   @NotNull
   JTabbedPane createTabbedPane();

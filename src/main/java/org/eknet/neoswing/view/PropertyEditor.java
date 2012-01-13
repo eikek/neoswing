@@ -29,19 +29,11 @@ import org.neo4j.graphdb.PropertyContainer;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.Transaction;
 
-import javax.swing.BorderFactory;
-import javax.swing.JComboBox;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JTextField;
-import javax.swing.SwingUtilities;
+import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
-import java.awt.Color;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.Insets;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
@@ -122,6 +114,13 @@ public class PropertyEditor extends JPanel {
     this(null, null, NeoSwingUtil.getFactory(true));
   }
 
+  /**
+   * Creates a dialog containing this editor for the specified element.
+   *
+   * @param element
+   * @param key
+   * @return
+   */
   public static Dialog inDialog(@NotNull PropertyContainer element, @Nullable String key) {
     final Dialog dialog = new Dialog("Edit Property");
     final PropertyEditor editor = new PropertyEditor(element, key);

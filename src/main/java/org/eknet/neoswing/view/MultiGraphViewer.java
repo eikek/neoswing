@@ -30,20 +30,15 @@ import org.neo4j.kernel.EmbeddedGraphDatabase;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.swing.AbstractAction;
-import javax.swing.JButton;
-import javax.swing.JFileChooser;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JTabbedPane;
-import javax.swing.JToolBar;
-import javax.swing.SwingConstants;
+import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.io.File;
 import java.util.prefs.Preferences;
 
 /**
+ * Organizes {@link GraphViewer}s in a tabbed pane.
+ * 
  * @author <a href="mailto:eike.kettner@gmail.com">Eike Kettner</a>
  * @since 12.01.12 17:44
  */
@@ -54,14 +49,15 @@ public class MultiGraphViewer extends JPanel {
   private final ComponentFactory factory;
   private JTabbedPane graphs;
 
-  public MultiGraphViewer(ComponentFactory factory) {
+  public MultiGraphViewer(@NotNull ComponentFactory factory) {
     super(new BorderLayout(), true);
     this.factory = factory;
     initComponents();
   }
 
   protected void initComponents() {
-    JPanel container = new JPanel(new BorderLayout());
+    JPanel container = factory.createPanel();
+    container.setLayout(new BorderLayout());
     this.graphs = factory.createTabbedPane();
     container.add(this.graphs, BorderLayout.CENTER);
     add(container, BorderLayout.CENTER);

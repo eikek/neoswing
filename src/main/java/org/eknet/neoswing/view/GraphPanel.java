@@ -23,11 +23,7 @@ import edu.uci.ics.jung.graph.DirectedSparseGraph;
 import edu.uci.ics.jung.graph.Graph;
 import edu.uci.ics.jung.visualization.GraphZoomScrollPane;
 import edu.uci.ics.jung.visualization.VisualizationViewer;
-import org.eknet.neoswing.ComponentFactory;
-import org.eknet.neoswing.GraphModel;
-import org.eknet.neoswing.LayoutComboModel;
-import org.eknet.neoswing.Layouts;
-import org.eknet.neoswing.VisualizationViewFactory;
+import org.eknet.neoswing.*;
 import org.eknet.neoswing.actions.AddNodeAction;
 import org.eknet.neoswing.actions.ResetAction;
 import org.eknet.neoswing.actions.SearchIndexAction;
@@ -37,19 +33,22 @@ import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
 
-import javax.swing.BorderFactory;
-import javax.swing.Box;
-import javax.swing.JButton;
-import javax.swing.JComboBox;
-import javax.swing.JPanel;
-import javax.swing.JToolBar;
-import java.awt.BorderLayout;
-import java.awt.Dimension;
+import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 /**
  * A view of one database.
+ *<p/>
+ * It uses {@link VisualizationViewer} to draw the graph and displays
+ * a toolbar that contains actions to
+ * <ul>
+ *   <li>add new nodes</li>
+ *   <li>reset the graph</li>
+ *   <li>change layout</li>
+ *   <li>find nodes/relationships via index search</li>
+ * </ul>
  *
  * @author <a href="mailto:eike.kettner@gmail.com">Eike Kettner</a>
  * @since 10.01.12 18:31

@@ -34,20 +34,9 @@ import org.neo4j.graphdb.event.PropertyEntry;
 import org.neo4j.graphdb.event.TransactionData;
 import org.neo4j.graphdb.event.TransactionEventHandler;
 
-import javax.swing.JButton;
-import javax.swing.JLabel;
-import javax.swing.JMenuItem;
-import javax.swing.JPanel;
-import javax.swing.JPopupMenu;
-import javax.swing.JScrollPane;
-import javax.swing.JTable;
-import javax.swing.JToolBar;
-import javax.swing.ListSelectionModel;
+import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
-import java.awt.BorderLayout;
-import java.awt.FlowLayout;
-import java.awt.Font;
-import java.awt.Window;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -160,15 +149,17 @@ public class PropertiesPanel extends JPanel {
 
 
   private JPanel createHeadPanel() {
-    JPanel main = new JPanel(new BorderLayout());
-    JToolBar bar = new JToolBar();
+    JPanel main = factory.createPanel();
+    main.setLayout(new BorderLayout());
+    JToolBar bar = factory.createToolbar();
     main.add(bar, BorderLayout.NORTH);
-    
+
     JButton button = factory.createToolbarButton();
     button.setAction(addPropertyAction);
     bar.add(button);
-    
-    JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEADING));
+
+    JPanel panel = factory.createPanel();
+    panel.setLayout(new FlowLayout(FlowLayout.LEADING));
     main.add(panel, BorderLayout.CENTER);
     infoLabel = factory.createLabel();
     infoLabel.setFont(infoLabel.getFont().deriveFont(Font.BOLD));

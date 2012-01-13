@@ -26,16 +26,8 @@ import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.PropertyContainer;
 import org.neo4j.graphdb.Relationship;
 
-import javax.swing.JComboBox;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JTabbedPane;
-import javax.swing.JTextField;
-import java.awt.BorderLayout;
-import java.awt.FlowLayout;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.Insets;
+import javax.swing.*;
+import java.awt.*;
 
 /**
  * @author <a href="mailto:eike.kettner@gmail.com">Eike Kettner</a>
@@ -67,7 +59,8 @@ public class SelectIndexPanel extends JPanel {
   private void initComponents() {
     setLayout(new BorderLayout(5, 5));
 
-    JPanel top = new JPanel(new FlowLayout(FlowLayout.LEADING));
+    JPanel top = factory.createPanel();
+    top.setLayout(new FlowLayout(FlowLayout.LEADING));
     add(top, BorderLayout.NORTH);
     top.add(new JLabel("Please select an index and query to execute against that index."));
 
@@ -80,7 +73,7 @@ public class SelectIndexPanel extends JPanel {
   }
 
   private JPanel createIndexPanel(Class<? extends PropertyContainer> type) {
-    JPanel input = new JPanel();
+    JPanel input = factory.createPanel();
     input.setLayout(new GridBagLayout());
 
     GridBagConstraints gbc = new GridBagConstraints();
@@ -93,7 +86,7 @@ public class SelectIndexPanel extends JPanel {
     gbc.gridy = 0;
     gbc.weightx = 0.2;
     input.add(indexLabel, gbc);
-    
+
     String[] names = isNodeIndex(type) ? db.index().nodeIndexNames() : db.index().relationshipIndexNames();
     JComboBox indexCombo = factory.createComboBox(names, true, false);
     gbc.gridx = 1;

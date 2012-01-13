@@ -34,11 +34,8 @@ import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.PropertyContainer;
 import org.neo4j.graphdb.Relationship;
 
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JSplitPane;
-import java.awt.BorderLayout;
-import java.awt.Dimension;
+import javax.swing.*;
+import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -98,7 +95,8 @@ public class GraphViewer extends JPanel implements GraphModel {
   private void initComponents() {
     setLayout(new BorderLayout(5, 5));
 
-    JSplitPane vsplit = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
+    JSplitPane vsplit = componentFactory.createSplitPane();
+    vsplit.setOrientation(JSplitPane.VERTICAL_SPLIT);
     propertiesPanel = new PropertiesPanel(componentFactory, null);
     vsplit.setLeftComponent(new JScrollPane(propertiesPanel));
     propertiesPanel.setPreferredSize(new Dimension(200, 50));
@@ -110,11 +108,13 @@ public class GraphViewer extends JPanel implements GraphModel {
     vsplit.setDividerLocation(-1);
     WindowUtil.bindDividerLocationToPrefs(vsplit, prefs, "graphviewer.vsplit.%s");
 
-    JPanel right = new JPanel(new BorderLayout());
+    JPanel right = componentFactory.createPanel();
+    right.setLayout(new BorderLayout());
     right.add(vsplit, BorderLayout.CENTER);
     right.setPreferredSize(new Dimension(150, right.getPreferredSize().height));
 
-    JSplitPane msplit = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
+    JSplitPane msplit = componentFactory.createSplitPane();
+    msplit.setOrientation(JSplitPane.HORIZONTAL_SPLIT);
     msplit.setLeftComponent(graphPanel);
     msplit.setRightComponent(right);
     msplit.setContinuousLayout(true);

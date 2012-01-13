@@ -21,24 +21,25 @@ package org.eknet.neoswing;
 
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.Action;
-import javax.swing.DefaultComboBoxModel;
-import javax.swing.JButton;
-import javax.swing.JComboBox;
-import javax.swing.JComponent;
-import javax.swing.JLabel;
-import javax.swing.JMenuItem;
-import javax.swing.JPopupMenu;
-import javax.swing.JTabbedPane;
-import javax.swing.JTable;
-import javax.swing.JTextField;
-import javax.swing.JToolBar;
+import javax.swing.*;
 
 /**
  * @author <a href="mailto:eike.kettner@gmail.com">Eike Kettner</a>
  * @since 10.01.12 18:49
  */
 public class DefaultComponentFactory implements ComponentFactory {
+
+  @NotNull
+  @Override
+  public JPanel createPanel() {
+    return new JPanel();
+  }
+
+  @NotNull
+  @Override
+  public JSplitPane createSplitPane() {
+    return new JSplitPane();
+  }
 
   @NotNull
   @Override
