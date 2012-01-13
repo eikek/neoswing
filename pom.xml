@@ -48,6 +48,7 @@
     <neo4j.bundle.version>1.5_01</neo4j.bundle.version>
     <jung.version>2.0.1</jung.version>
     <jung.bundle.version>2.0.1-001</jung.bundle.version>
+    <jide-oss.version>2.10.2</jide-oss.version>
   </properties>
 
   <dependencies>
@@ -83,7 +84,7 @@
     <dependency>
       <groupId>com.jidesoft</groupId>
       <artifactId>jide-oss</artifactId>
-      <version>2.10.2</version>
+      <version>${jide-oss.version}</version>
       <optional>true</optional>
     </dependency>
 

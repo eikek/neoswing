@@ -30,18 +30,31 @@
     <bundle dependency="true">
       wrap:mvn:colt/colt/1.2.0$Bundle-Name=Colt Library&amp;Bundle-SymbolicName=colt.colt&amp;Export-Package=*;version=1.2.0&amp;Bundle-Version=1.2.0
     </bundle>
-
     <bundle>mvn:org.alainn.osgi.bundles/net.sf.jung.bundle/${jung.bundle.version}</bundle>
-    <bundle>
-      wrap:mvn:net.sf.jung/jung-visualization/${jung.version}$Bundle-Name=JUNG Visualization&amp;Bundle-SymbolicName=net.sf.jung.jung-visualization&amp;Export-Package=*;version=${jung.version}&amp;Bundle-Version=${jung.version}
-    </bundle>
-    <bundle>
+  </feature>
+
+  <feature name="jung-algorithms" version="${jung.version}">
+    <bundle dependency="true">
       wrap:mvn:net.sf.jung/jung-algorithms/${jung.version}$Bundle-Name=JUNG Algorithms&amp;Bundle-SymbolicName=net.sf.jung.jung-algorithms&amp;Export-Package=*;version=${jung.version}&amp;Bundle-Version=${jung.version}
     </bundle>
   </feature>
 
+  <feature name="jung-visualization" version="${jung.version}">
+    <bundle dependency="true">
+      wrap:mvn:net.sf.jung/jung-visualization/${jung.version}$Bundle-Name=JUNG Visualization&amp;Bundle-SymbolicName=net.sf.jung.jung-visualization&amp;Export-Package=*;version=${jung.version}&amp;Bundle-Version=${jung.version}
+    </bundle>
+  </feature>
+
+  <feature name="jide-oss" version="${jide-oss.version}">
+     <bundle>
+       wrap:mvn:com.jidesoft/jide-oss/${jide-oss.version}$Bundle-Name=JIDE OSS&amp;Bundle-SymbolicName=com.jidesoft.jide-oss&amp;Fragment-Host=system.bundle; extension:=framework&amp;Import-Package=!*&amp;Export-Package=com.jidesoft.*&amp;Bundle-Version=2.10.2
+     </bundle>
+  </feature>
+
   <feature name="neoswing" version="${project.version}">
     <feature version="${jung.version}">jung</feature>
+    <feature version="${jung.version}">jung-algorithms</feature>
+    <feature version="${jung.version}">jung-visualization</feature>
     <bundle dependency="true">mvn:org.neo4j/neo4j-osgi-bundle/${neo4j.bundle.version}</bundle>
     <bundle>mvn:org.eknet.neoswing/neoswing/${project.version}</bundle>
   </feature>
