@@ -69,12 +69,10 @@
     <dependency>
       <groupId>org.neo4j</groupId>
       <artifactId>neo4j-kernel</artifactId>
-      <version>${neo4j.version}</version>
     </dependency>
     <dependency>
       <groupId>org.neo4j</groupId>
       <artifactId>neo4j-lucene-index</artifactId>
-      <version>${neo4j.version}</version>
     </dependency>
     <!--<dependency>-->
       <!--<groupId>org.neo4j</groupId>-->
@@ -225,7 +223,6 @@
             <manifestEntries>
               <Build-Timestamp>${maven.build.timestamp}</Build-Timestamp>
               <Build-Version>${project.version}</Build-Version>
-              <Main-Class>org.eknet.neoswing.NeoSwing</Main-Class>
             </manifestEntries>
           </archive>
         </configuration>
