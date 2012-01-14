@@ -8,7 +8,9 @@ visuaization.
 Usage
 =====
 
-[Maven](http://maven.apache.org) is used to compile the sources:
+You can [download](downloads/) an executable jar from the download area
+or build from source. [Maven](http://maven.apache.org) is used to build
+NeoSwing:
 
     mvn install
 
@@ -27,7 +29,7 @@ The `QuickView` class provides static methods to quickly fire up a frame
 or dialog of a database. That is often handy during development, when
 you like to view the current graphs state:
 
-´´´ java
+``` java
 GraphDatabaseService db = ...;
 QickView.showModal(db);
 ```
