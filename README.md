@@ -8,7 +8,7 @@ visuaization.
 Usage
 =====
 
-You can [download](downloads/) an executable jar from the download area
+You can [download](/eikek/neoswing/downloads) an executable jar from the download area
 or build from source. [Maven](http://maven.apache.org) is used to build
 NeoSwing:
 
