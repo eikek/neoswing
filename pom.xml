@@ -25,7 +25,7 @@
 
   <groupId>org.eknet.neoswing</groupId>
   <artifactId>neoswing</artifactId>
-  <version>1.0.1-SNAPSHOT</version>
+  <version>1.0.1</version>
   <packaging>bundle</packaging>
 
   <name>NeoSwing</name>
