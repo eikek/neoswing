@@ -23,9 +23,7 @@ import org.eknet.neoswing.view.GraphViewer;
 import org.jetbrains.annotations.NotNull;
 import org.neo4j.graphdb.GraphDatabaseService;
 
-import javax.swing.JFrame;
-import javax.swing.UIManager;
-import java.awt.BorderLayout;
+import javax.swing.*;
 
 /**
  * @author <a href="mailto:eike.kettner@gmail.com">Eike Kettner</a>
@@ -38,32 +36,16 @@ public final class QuickView {
   }
 
   /**
-   * Fires up a frame showing the graph from the specified
-   * datbase.
-   *
-   * @param db
-   */
-  public static void show(@NotNull GraphDatabaseService db) {
-    GraphViewer gp = new GraphViewer(db);
-    JFrame frame = new JFrame("NeoSwing");
-    frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-    frame.setIconImage(NeoSwingUtil.getFrameIcon());
-    frame.getContentPane().setLayout(new BorderLayout());
-    frame.getContentPane().add(gp, BorderLayout.CENTER);
-    frame.setSize(800, 800);
-    frame.setVisible(true);
-  }
-
-  /**
-   * Fires up  a modal dialog showing the graph from the
+   * Fires up  a modal dialog showing the graph of the
    * specified database.
    * 
    * @param db
    */
-  public static void showModal(@NotNull GraphDatabaseService db) {
-    GraphViewer gp = new GraphViewer(db);
-    Dialog dialog = new Dialog("NeoSwing");
-    dialog.setContent(gp);
+  public static void show(@NotNull GraphDatabaseService db) {
+    GraphViewer gv = new GraphViewer(db);
+    Dialog dialog = new Dialog(NeoSwingUtil.getApplicationName()
+        + " - " + NeoSwingUtil.getApplicationVersion());
+    dialog.setContent(gv);
     dialog.setIcon(NeoSwingUtil.getFrameIcon());
     dialog.setShowCancelOption(false);
     dialog.show();

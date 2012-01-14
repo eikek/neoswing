@@ -23,6 +23,15 @@ or denotes a valid neo4j database directory. If an empty directory is
 specified, a new database is created. A database can always be selected
 via the Gui.
 
+The `QuickView` class provides static methods to quickly fire up a frame
+or dialog of a database. That is often handy during development, when
+you like to view the current graphs state:
+
+´´´ java
+GraphDatabaseService db = ...;
+QickView.showModal(db);
+```
+
 OSGi
 ----
 
