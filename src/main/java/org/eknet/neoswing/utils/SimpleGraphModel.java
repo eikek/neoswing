@@ -19,14 +19,15 @@
 
 package org.eknet.neoswing.utils;
 
+import edu.uci.ics.jung.graph.DirectedSparseMultigraph;
 import edu.uci.ics.jung.graph.Graph;
 import edu.uci.ics.jung.visualization.VisualizationViewer;
+import org.eknet.neoswing.GraphModel;
+import org.eknet.neoswing.VisualizationViewFactory;
 import org.jetbrains.annotations.NotNull;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
-
-import org.eknet.neoswing.GraphModel;
 
 /**
  * @author <a href="mailto:eike.kettner@gmail.com">Eike Kettner</a>
@@ -42,6 +43,12 @@ public class SimpleGraphModel implements GraphModel {
     this.graph = graph;
     this.viewer = viewer;
     this.database = database;
+  }
+
+  public SimpleGraphModel(GraphDatabaseService db, VisualizationViewFactory factory) {
+    this.graph = new DirectedSparseMultigraph<Node, Relationship>();
+    this.viewer = factory.createViewer(this.graph, db);
+    this.database = db;
   }
 
   @NotNull

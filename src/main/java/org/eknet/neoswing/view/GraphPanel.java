@@ -19,7 +19,6 @@
 
 package org.eknet.neoswing.view;
 
-import edu.uci.ics.jung.graph.DirectedSparseGraph;
 import edu.uci.ics.jung.graph.Graph;
 import edu.uci.ics.jung.visualization.GraphZoomScrollPane;
 import edu.uci.ics.jung.visualization.VisualizationViewer;
@@ -28,6 +27,7 @@ import org.eknet.neoswing.actions.AddNodeAction;
 import org.eknet.neoswing.actions.ResetAction;
 import org.eknet.neoswing.actions.SearchIndexAction;
 import org.eknet.neoswing.utils.NeoSwingUtil;
+import org.eknet.neoswing.utils.SimpleGraphModel;
 import org.jetbrains.annotations.NotNull;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
@@ -55,23 +55,21 @@ import java.awt.event.ActionListener;
  */
 public class GraphPanel extends JPanel implements GraphModel {
 
-  private final GraphDatabaseService db;
-  private final Graph<Node, Relationship> graph;
-  private final VisualizationViewer<Node, Relationship> viewer;
+  private final GraphModel graphModel;
   private final ComponentFactory factory;
 
-  public GraphPanel(GraphDatabaseService db) {
+  public GraphPanel(@NotNull GraphDatabaseService db) {
     this(db, new DefaultVisualizationViewFactory(), NeoSwingUtil.getFactory(true));
   }
 
-  public GraphPanel(GraphDatabaseService db, VisualizationViewFactory factory, ComponentFactory componentFactory) {
-    super(new BorderLayout());
-    this.factory = componentFactory;
-    this.db = db;
-    this.graph = new DirectedSparseGraph<Node, Relationship>();
-    this.graph.addVertex(db.getReferenceNode());
-    this.viewer = factory.createViewer(graph, db);
+  public GraphPanel(@NotNull GraphDatabaseService db, @NotNull VisualizationViewFactory factory, @NotNull ComponentFactory componentFactory) {
+    this(new SimpleGraphModel(db, factory), componentFactory);
+  }
 
+  public GraphPanel(@NotNull GraphModel model, ComponentFactory componentFactory) {
+    super(new BorderLayout(), true);
+    this.graphModel = model;
+    this.factory = componentFactory;
     initComponents();
   }
 
@@ -79,7 +77,7 @@ public class GraphPanel extends JPanel implements GraphModel {
     JToolBar bar = createToolbar();
     add(bar, BorderLayout.NORTH);
 
-    GraphZoomScrollPane container = new GraphZoomScrollPane(viewer);
+    GraphZoomScrollPane container = new GraphZoomScrollPane(getViewer());
     container.setBorder(BorderFactory.createEtchedBorder());
     add(container, BorderLayout.CENTER);
   }
@@ -94,7 +92,7 @@ public class GraphPanel extends JPanel implements GraphModel {
     box.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        viewer.setGraphLayout(layoutModel.getSelectedItem().createLayout(graph));
+        getViewer().setGraphLayout(layoutModel.getSelectedItem().createLayout(getGraph()));
       }
     });
     box.setSelectedItem(Layouts.FRLayout);
@@ -114,7 +112,7 @@ public class GraphPanel extends JPanel implements GraphModel {
 
     // search index
     JButton findButton = factory.createToolbarButton();
-    findButton.setAction(new SearchIndexAction(db, graph));
+    findButton.setAction(new SearchIndexAction(getDatabase(), getGraph()));
     bar.add(findButton);
     return bar;
   }
@@ -122,19 +120,19 @@ public class GraphPanel extends JPanel implements GraphModel {
   @NotNull
   @Override
   public Graph<Node, Relationship> getGraph() {
-    return graph;
+    return graphModel.getGraph();
   }
 
   @NotNull
   @Override
   public VisualizationViewer<Node, Relationship> getViewer() {
-    return viewer;
+    return graphModel.getViewer();
   }
 
   @NotNull
   @Override
   public GraphDatabaseService getDatabase() {
-    return db;
+    return graphModel.getDatabase();
   }
 
 }
