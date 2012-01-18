@@ -120,7 +120,7 @@ public class NodePopupMenu extends AbstractMousePlugin {
       createRel.setWindow(owner);
       createRelationshipActions.add(createRel);
 
-      createRel = new CreateRelationshipAction(graphModel.getGraph(), node, Direction.INCOMING);
+      createRel = new CreateRelationshipAction(graphModel.getGraph(), node, Direction.OUTGOING);
       createRel.setOther(other);
       createRel.setWindow(owner);
       createRelationshipActions.add(createRel);

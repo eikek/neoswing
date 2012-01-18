@@ -98,6 +98,7 @@ public class CreateRelationshipAction extends AbstractSwingAction {
     }
     this.direction = direction;
     setEnabled(this.node != null && this.direction != null);
+    updateName();
   }
 
   public Node getOther() {
