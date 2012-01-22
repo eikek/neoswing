@@ -49,6 +49,7 @@
     <jung.version>2.0.1</jung.version>
     <jung.bundle.version>2.0.1-001</jung.bundle.version>
     <jide-oss.version>2.10.2</jide-oss.version>
+    <slf4j.version>1.6.4</slf4j.version>
   </properties>
 
   <dependencies>
@@ -75,11 +76,6 @@
       <groupId>org.neo4j</groupId>
       <artifactId>neo4j-lucene-index</artifactId>
     </dependency>
-    <!--<dependency>-->
-      <!--<groupId>org.neo4j</groupId>-->
-      <!--<artifactId>neo4j-cypher</artifactId>-->
-      <!--<version>${neo4j.version}</version>-->
-    <!--</dependency>-->
 
     <dependency>
       <groupId>com.jidesoft</groupId>
@@ -339,23 +335,8 @@
       </dependency>
       <dependency>
         <groupId>org.slf4j</groupId>
-        <artifactId>slf4j-jcl</artifactId>
-        <version>1.6.1</version>
-      </dependency>
-      <dependency>
-        <groupId>org.slf4j</groupId>
         <artifactId>slf4j-api</artifactId>
-        <version>1.6.1</version>
-      </dependency>
-      <dependency>
-        <groupId>org.slf4j</groupId>
-        <artifactId>slf4j-simple</artifactId>
-        <version>1.6.1</version>
-      </dependency>
-      <dependency>
-        <groupId>org.slf4j</groupId>
-        <artifactId>slf4j-log4j12</artifactId>
-        <version>1.6.1</version>
+        <version>${slf4j.version}</version>
       </dependency>
       <dependency>
         <groupId>org.jetbrains</groupId>
@@ -375,16 +356,6 @@
       <dependency>
         <groupId>org.neo4j</groupId>
         <artifactId>neo4j-lucene-index</artifactId>
-        <version>${neo4j.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.neo4j</groupId>
-        <artifactId>neo4j-cypher</artifactId>
-        <version>${neo4j.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.neo4j</groupId>
-        <artifactId>neo4j-jmx</artifactId>
         <version>${neo4j.version}</version>
       </dependency>
     </dependencies>
