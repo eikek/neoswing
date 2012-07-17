@@ -31,10 +31,9 @@ The `QuickView` class provides static methods to quickly fire up a frame
 or dialog of a database. That is often handy during development, when
 you like to view the current graphs state:
 
-``` java
-GraphDatabaseService db = ...;
-QickView.showModal(db);
-```
+    GraphDatabaseService db = ...;
+    QickView.showModal(db);
+
 
 OSGi
 ----

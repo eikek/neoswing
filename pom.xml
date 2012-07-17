@@ -25,7 +25,7 @@
 
   <groupId>org.eknet.neoswing</groupId>
   <artifactId>neoswing</artifactId>
-  <version>1.0.2-SNAPSHOT</version>
+  <version>1.0.2</version>
   <packaging>bundle</packaging>
 
   <name>NeoSwing</name>
@@ -362,7 +362,7 @@
   </dependencyManagement>
 
   <scm>
-    <connection>scm:git:git@eknet.org:neoswing.git</connection>
+    <connection>scm:git:https://eknet.org/git/eike/neoswing.git</connection>
     <url>https://github.com/eikek/neoswing</url>
   </scm>
 
@@ -374,22 +374,14 @@
     <repository>
       <id>eknet-maven2</id>
       <name>eknet-maven2</name>
-      <url>http://maven.eknet.org/maven2</url>
+      <url>https://eknet.org/maven2</url>
     </repository>
-    <snapshotRepository>
-      <id>eknet-maven2</id>
-      <name>eknet-maven2</name>
-      <url>http://maven.eknet.org/maven2</url>
-    </snapshotRepository>
   </distributionManagement>
 
   <repositories>
     <repository>
-      <id>eknet.org</id>
-      <url>http://maven.eknet.org/repo</url>
-      <snapshots>
-        <enabled>true</enabled>
-      </snapshots>
+      <id>eknet-maven2</id>
+      <url>https://eknet.org/maven2</url>
     </repository>
   </repositories>  
 </project>
