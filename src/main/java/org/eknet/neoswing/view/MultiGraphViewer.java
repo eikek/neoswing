@@ -1,32 +1,27 @@
 /*
- * Copyright (c) 2012 Eike Kettner
+ * Copyright 2012 Eike Kettner
  *
- * This file is part of NeoSwing.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * NeoSwing is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
- * NeoSwing is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with NeoSwing.  If not, see <http://www.gnu.org/licenses/>.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 package org.eknet.neoswing.view;
 
 import org.eknet.neoswing.ComponentFactory;
+import org.eknet.neoswing.GraphDb;
 import org.eknet.neoswing.NeoSwing;
+import org.eknet.neoswing.loader.GraphLoaderManager;
 import org.eknet.neoswing.utils.Dialogs;
 import org.eknet.neoswing.utils.NeoSwingUtil;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.neo4j.graphdb.GraphDatabaseService;
-import org.neo4j.kernel.EmbeddedGraphDatabase;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,20 +40,32 @@ import java.util.prefs.Preferences;
 public class MultiGraphViewer extends JPanel {
   private final static Logger log = LoggerFactory.getLogger(MultiGraphViewer.class);
   private final static Preferences prefs = Preferences.userNodeForPackage(NeoSwing.class);
-  
+
+  private final GraphLoaderManager loaderManager;
   private final ComponentFactory factory;
   private JTabbedPane graphs;
 
-  public MultiGraphViewer(@NotNull ComponentFactory factory) {
+  public MultiGraphViewer(ComponentFactory factory, GraphLoaderManager loaderManager) {
     super(new BorderLayout(), true);
     this.factory = factory;
+    this.loaderManager = loaderManager;
     initComponents();
   }
 
   protected void initComponents() {
     JPanel container = factory.createPanel();
     container.setLayout(new BorderLayout());
-    this.graphs = factory.createTabbedPane();
+    this.graphs = factory.createTabbedPane(new AbstractAction() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        Component c = (Component) e.getSource();
+        if (c instanceof GraphViewer) {
+          GraphViewer viewer = (GraphViewer) c;
+          viewer.getDatabase().shutdown();
+        }
+        graphs.remove(c);
+      }
+    });
     container.add(this.graphs, BorderLayout.CENTER);
     add(container, BorderLayout.CENTER);
 
@@ -70,10 +77,11 @@ public class MultiGraphViewer extends JPanel {
   
   protected JToolBar createToolbar(ComponentFactory factory) {
     JToolBar bar = factory.createToolbar();
-
-    JButton openButton = factory.createToolbarButton();
-    openButton.setAction(new OpenDatabaseAction());
-    bar.add(openButton);
+    for (String name : loaderManager.getRegisteredLoaders()) {
+      JButton openButton = factory.createToolbarButton();
+      openButton.setAction(new OpenDatabaseAction(name));
+      bar.add(openButton);
+    }
 
     return bar;
   }
@@ -92,35 +100,37 @@ public class MultiGraphViewer extends JPanel {
     }
   }
 
-  public void openDatabase(@NotNull GraphDatabaseService db, @Nullable String name) {
-    if (name == null) {
-      name = "NeoDb " + graphs.getTabCount();
+  public void openDatabase(GraphDb db, String tabName, final Icon icon) {
+    final String name;
+    if (tabName == null) {
+      name = "Db " + graphs.getTabCount();
+    } else {
+      name = tabName;
     }
     GraphViewer panel = new GraphViewer(db, factory);
-    graphs.addTab(name, panel);
+    graphs.addTab(name, icon, panel);
   }
 
-  public void openDatabase(@NotNull File directory) {
-    final GraphDatabaseService db = new EmbeddedGraphDatabase(directory.getAbsolutePath());
+  public void openDatabase(String type, File directory) {
+    final GraphDb db = new GraphDb(loaderManager.loadGraph(type, directory.getAbsolutePath()));
     Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
       @Override
       public void run() {
         db.shutdown();
       }
     }));
-    openDatabase(db, directory.getName());
+    openDatabase(db, directory.getName(), NeoSwingUtil.graphDbIcon(type));
   }
 
-  public void openDatabase(@NotNull GraphDatabaseService db) {
-    openDatabase(db, null);
-  }
 
   private final class OpenDatabaseAction extends AbstractAction {
 
-    private OpenDatabaseAction() {
+    private final String name;
+    private OpenDatabaseAction(String name) {
+      this.name = name;
       putValue(NAME, "Open Database...");
       putValue(SHORT_DESCRIPTION, "Open a new database from the file system");
-      putValue(SMALL_ICON, NeoSwingUtil.icon("folder_database"));
+      putValue(SMALL_ICON, NeoSwingUtil.graphDbIcon(name));
     }
 
     @Override
@@ -128,11 +138,11 @@ public class MultiGraphViewer extends JPanel {
       final String key = "neoswing.multigraphview.lastlocation";
       String lastLocation = prefs.get(key, null);
       JFileChooser fc = new JFileChooser(lastLocation);
-      fc.setDialogTitle("Open Neo4j Database");
+      fc.setDialogTitle("Open Database");
       fc.setAcceptAllFileFilterUsed(false);
       fc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
       fc.setMultiSelectionEnabled(false);
-      JLabel info = new JLabel("<html><p>Select a valid Neo4J database<br>" +
+      JLabel info = new JLabel("<html><p>Select a valid database<br>" +
           "directory or an empty one, in<br>which case a new database is<br>" +
           "created.</p></html>");
       info.setVerticalAlignment(SwingConstants.TOP);
@@ -146,9 +156,8 @@ public class MultiGraphViewer extends JPanel {
           return;
         }
         try {
-          NeoSwingUtil.checkDatabaseDirectory(f);
           prefs.put(key, fc.getSelectedFile().getAbsolutePath());
-          openDatabase(fc.getSelectedFile());
+          openDatabase(name, fc.getSelectedFile());
         } catch (IllegalArgumentException error) {
           Dialogs.error(owner, error.getMessage());
         }

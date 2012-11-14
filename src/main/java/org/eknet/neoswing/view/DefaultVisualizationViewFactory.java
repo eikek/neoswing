@@ -1,24 +1,24 @@
 /*
- * Copyright (c) 2012 Eike Kettner
+ * Copyright 2012 Eike Kettner
  *
- * This file is part of NeoSwing.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * NeoSwing is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
- * NeoSwing is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with NeoSwing.  If not, see <http://www.gnu.org/licenses/>.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 package org.eknet.neoswing.view;
 
+import com.tinkerpop.blueprints.Edge;
+import com.tinkerpop.blueprints.Element;
+import com.tinkerpop.blueprints.Vertex;
 import edu.uci.ics.jung.algorithms.layout.FRLayout2;
 import edu.uci.ics.jung.graph.Graph;
 import edu.uci.ics.jung.visualization.VisualizationViewer;
@@ -26,6 +26,7 @@ import edu.uci.ics.jung.visualization.control.DefaultModalGraphMouse;
 import edu.uci.ics.jung.visualization.renderers.Renderer;
 import edu.uci.ics.jung.visualization.renderers.VertexLabelAsShapeRenderer;
 import org.apache.commons.collections15.Transformer;
+import org.eknet.neoswing.GraphDb;
 import org.eknet.neoswing.GraphModel;
 import org.eknet.neoswing.NeoSwing;
 import org.eknet.neoswing.VisualizationViewFactory;
@@ -33,16 +34,10 @@ import org.eknet.neoswing.utils.NeoSwingUtil;
 import org.eknet.neoswing.utils.SimpleGraphModel;
 import org.eknet.neoswing.view.control.NavigateNodeMousePlugin;
 import org.eknet.neoswing.view.control.NodePopupMenu;
-import org.jetbrains.annotations.NotNull;
-import org.neo4j.graphdb.GraphDatabaseService;
-import org.neo4j.graphdb.Node;
-import org.neo4j.graphdb.PropertyContainer;
-import org.neo4j.graphdb.Relationship;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.awt.Color;
-import java.awt.Paint;
-import java.awt.Rectangle;
-import java.awt.Shape;
+import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.geom.RoundRectangle2D;
 import java.util.prefs.Preferences;
@@ -52,35 +47,35 @@ import java.util.prefs.Preferences;
  * @since 10.01.12 18:38
  */
 public class DefaultVisualizationViewFactory implements VisualizationViewFactory {
+  private static final Logger log = LoggerFactory.getLogger(DefaultVisualizationViewFactory.class);
 
   private final static Preferences prefs = Preferences.userNodeForPackage(NeoSwing.class);
   private final static String labelKeyFormat = "defaultlabel.%s.%s.%s";
 
-  public static String createDefaultLabelPrefKey(PropertyContainer container) {
-    String type = container instanceof Node ? "node" : "relationship";
-    long id = NeoSwingUtil.getId(container);
-    String dbstr = container.getGraphDatabase().toString();
+  public static String createDefaultLabelPrefKey(Element container, GraphDb db) {
+    String type = container instanceof Vertex ? "node" : "relationship";
+    String id = NeoSwingUtil.getId(container);
+    String dbstr = db.getName();
     if (dbstr.length() > 15) {
       dbstr = dbstr.substring(dbstr.length() - 15);
     }
     return String.format(labelKeyFormat, dbstr, type, id);
   }
   
-  @NotNull
   @Override
-  public VisualizationViewer<Node, Relationship> createViewer(@NotNull final Graph<Node, Relationship> graph, @NotNull final GraphDatabaseService db) {
-    final VisualizationViewer<Node, Relationship> vv =
-        new VisualizationViewer<Node, Relationship>(new FRLayout2<Node, Relationship>(graph));
+  public VisualizationViewer<Vertex, Edge> createViewer(final Graph<Vertex, Edge> graph, final GraphDb db) {
+    final VisualizationViewer<Vertex, Edge> vv =
+        new VisualizationViewer<Vertex, Edge>(new FRLayout2<Vertex, Edge>(graph));
     vv.getModel().getRelaxer().setSleepTime(0);
-    DefaultModalGraphMouse<Node, Relationship> mouseSupport = new DefaultModalGraphMouse<Node,Relationship>();
+    DefaultModalGraphMouse<Vertex, Edge> mouseSupport = new DefaultModalGraphMouse<Vertex,Edge>();
     addMousePlugins(mouseSupport, new SimpleGraphModel(graph, vv, db));
     vv.setGraphMouse(mouseSupport);
     vv.addKeyListener(mouseSupport.getModeKeyListener());
     vv.setToolTipText("<html><center>Type 'p' for Pick mode<p>Type 't' for Transform mode");
 
-    VertexLabelAsShapeRenderer<Node, Relationship> vertexShape = new VertexLabelAsShapeRenderer<Node, Relationship>(vv.getRenderContext()) {
+    VertexLabelAsShapeRenderer<Vertex, Edge> vertexShape = new VertexLabelAsShapeRenderer<Vertex, Edge>(vv.getRenderContext()) {
       @Override
-      public Shape transform(Node v) {
+      public Shape transform(Vertex v) {
         Rectangle rect = (Rectangle) super.transform(v);
         return new RoundRectangle2D.Double(rect.x - 3, rect.y - 3, rect.width + 7, rect.height + 7, 10, 10);
       }
@@ -89,49 +84,58 @@ public class DefaultVisualizationViewFactory implements VisualizationViewFactory
     vertexShape.setPosition(Renderer.VertexLabel.Position.CNTR);
     vv.setBackground(Color.WHITE);
     vv.getRenderContext().setVertexShapeTransformer(vertexShape);
-    vv.getRenderContext().setVertexLabelTransformer(new Transformer<Node, String>() {
+    vv.getRenderContext().setVertexLabelTransformer(new Transformer<Vertex, String>() {
+
       @Override
-      public String transform(Node node) {
-        final String key = createDefaultLabelPrefKey(node);
-        String label = prefs.get(key, null);
-        if (label != null) {
-          if (node.hasProperty(label)) {
-            return node.getId() + ": " + node.getProperty(label).toString();
+      public String transform(Vertex node) {
+        GraphDb.Tx tx = db.beginTx();
+        try {
+          final String key = createDefaultLabelPrefKey(node, db);
+          String label = prefs.get(key, null);
+          if (label != null) {
+            if (node.getProperty(label) != null) {
+              return node.getId() + ": " + node.getProperty(label).toString();
+            }
           }
+          if (node.getProperty("name") != null) {
+            return node.getId() + ": " + node.getProperty("name");
+          }
+          String s = node.toString();
+          tx.success();
+          return s;
+        } catch (Exception e) {
+          log.error("Error rendering label", e);
+          tx.success();
+          return node.toString();
+        } finally {
+          tx.finish();
         }
-        if (node.hasProperty("name")) {
-          return node.getId() + ": " + node.getProperty("name");
-        }
-        if (node.getId() == 0) {
-          return "Reference";
-        }
-        return node.toString();
       }
     });
     vv.getRenderer().setVertexLabelRenderer(vertexShape);
-    vv.getRenderContext().setVertexFillPaintTransformer(new Transformer<Node, Paint>() {
+    vv.getRenderContext().setVertexFillPaintTransformer(new Transformer<Vertex, Paint>() {
       private Color nodefill = Color.getHSBColor(207, 19, 97);
 
       @Override
-      public Paint transform(Node v) {
-        if (v.getId() == 0) {
-          return Color.green;
-        }
+      public Paint transform(Vertex v) {
+//        if (v.getId() == 0) {
+//          return Color.green;
+//        }
         return nodefill;
       }
     });
 
-    vv.getRenderContext().setEdgeLabelTransformer(new Transformer<Relationship, String>() {
+    vv.getRenderContext().setEdgeLabelTransformer(new Transformer<Edge, String>() {
       @Override
-      public String transform(Relationship e) {
-        return e.getType().name();
+      public String transform(Edge e) {
+        return e.getLabel();
       }
     });
 
     return vv;
   }
 
-  protected void addMousePlugins(DefaultModalGraphMouse<Node, Relationship> plugin, GraphModel graphModel) {
+  protected void addMousePlugins(DefaultModalGraphMouse<Vertex, Edge> plugin, GraphModel graphModel) {
     plugin.add(new NodePopupMenu(MouseEvent.BUTTON3));
     plugin.add(new NavigateNodeMousePlugin(graphModel));
   }

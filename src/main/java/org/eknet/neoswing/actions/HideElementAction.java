@@ -1,31 +1,27 @@
 /*
- * Copyright (c) 2012 Eike Kettner
+ * Copyright 2012 Eike Kettner
  *
- * This file is part of NeoSwing.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * NeoSwing is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
- * NeoSwing is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with NeoSwing.  If not, see <http://www.gnu.org/licenses/>.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 package org.eknet.neoswing.actions;
 
-import java.awt.event.ActionEvent;
-
-import org.neo4j.graphdb.Node;
-import org.neo4j.graphdb.PropertyContainer;
-import org.neo4j.graphdb.Relationship;
-
+import com.tinkerpop.blueprints.Edge;
+import com.tinkerpop.blueprints.Element;
+import com.tinkerpop.blueprints.Vertex;
 import org.eknet.neoswing.GraphModel;
+
+import java.awt.event.ActionEvent;
 
 /**
  * @author <a href="mailto:eike.kettner@gmail.com">Eike Kettner</a>
@@ -33,10 +29,10 @@ import org.eknet.neoswing.GraphModel;
  */
 public class HideElementAction extends AbstractSwingAction {
 
-  private final PropertyContainer element;
+  private final Element element;
   private final GraphModel graphModel;
   
-  public HideElementAction(GraphModel graphModel, PropertyContainer element) {
+  public HideElementAction(GraphModel graphModel, Element element) {
     this.element = element;
     this.graphModel = graphModel;
     
@@ -45,11 +41,11 @@ public class HideElementAction extends AbstractSwingAction {
 
   @Override
   public void actionPerformed(ActionEvent e) {
-    if (element instanceof Node) {
-      graphModel.getGraph().removeVertex((Node) element);
+    if (element instanceof Vertex) {
+      graphModel.getGraph().removeVertex((Vertex) element);
     }
-    if (element instanceof Relationship) {
-      graphModel.getGraph().removeEdge((Relationship) element);
+    if (element instanceof Edge) {
+      graphModel.getGraph().removeEdge((Edge) element);
     }
   }
 }

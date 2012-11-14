@@ -1,34 +1,31 @@
 /*
- * Copyright (c) 2012 Eike Kettner
+ * Copyright 2012 Eike Kettner
  *
- * This file is part of NeoSwing.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * NeoSwing is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
- * NeoSwing is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with NeoSwing.  If not, see <http://www.gnu.org/licenses/>.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 package org.eknet.neoswing.actions;
 
+import com.tinkerpop.blueprints.Direction;
+import com.tinkerpop.blueprints.Edge;
+import com.tinkerpop.blueprints.Vertex;
+import edu.uci.ics.jung.graph.Graph;
+import org.eknet.neoswing.GraphModel;
+import org.eknet.neoswing.utils.NeoSwingUtil;
+
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.List;
-
-import edu.uci.ics.jung.graph.Graph;
-import org.neo4j.graphdb.Node;
-import org.neo4j.graphdb.Relationship;
-
-import org.eknet.neoswing.GraphModel;
-import org.eknet.neoswing.utils.NeoSwingUtil;
 
 /**
  * @author <a href="mailto:eike.kettner@gmail.com">Eike Kettner</a>
@@ -53,21 +50,21 @@ public class ResetAction extends AbstractSwingAction {
 
   @Override
   public void actionPerformed(ActionEvent e) {
-    Graph<Node, Relationship> graph = graphModel.getGraph();
-    List<Relationship> relationships = new ArrayList<Relationship>(graph.getEdges());
-    for (Relationship rel : relationships) {
+    Graph<Vertex, Edge> graph = graphModel.getGraph();
+    List<Edge> relationships = new ArrayList<Edge>(graph.getEdges());
+    for (Edge rel : relationships) {
       graph.removeEdge(rel);
-      graph.removeVertex(rel.getEndNode());
-      graph.removeVertex(rel.getStartNode());
+      graph.removeVertex(rel.getVertex(Direction.IN));
+      graph.removeVertex(rel.getVertex(Direction.OUT));
     }
-    List<Node> nodes = new ArrayList<Node>(graph.getVertices());
-    for (Node node : nodes) {
+    List<Vertex> nodes = new ArrayList<Vertex>(graph.getVertices());
+    for (Vertex node : nodes) {
       graph.removeVertex(node);
     }
     if (showReferenceNode) {
-      if (!graph.containsVertex(graphModel.getDatabase().getReferenceNode())) {
-        graph.addVertex(graphModel.getDatabase().getReferenceNode());
-      }
+//      if (!graph.containsVertex(graphModel.getDatabase().getReferenceNode())) {
+//        graph.addVertex(graphModel.getDatabase().getReferenceNode());
+//      }
     }
     graphModel.getViewer().repaint();
   }

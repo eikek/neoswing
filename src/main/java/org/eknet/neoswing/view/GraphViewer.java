@@ -1,38 +1,34 @@
 /*
- * Copyright (c) 2012 Eike Kettner
+ * Copyright 2012 Eike Kettner
  *
- * This file is part of NeoSwing.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * NeoSwing is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
- * NeoSwing is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with NeoSwing.  If not, see <http://www.gnu.org/licenses/>.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 package org.eknet.neoswing.view;
 
+import com.tinkerpop.blueprints.Edge;
+import com.tinkerpop.blueprints.Element;
+import com.tinkerpop.blueprints.Vertex;
 import edu.uci.ics.jung.graph.Graph;
 import edu.uci.ics.jung.visualization.VisualizationViewer;
 import edu.uci.ics.jung.visualization.control.DefaultModalGraphMouse;
 import org.eknet.neoswing.ComponentFactory;
+import org.eknet.neoswing.GraphDb;
 import org.eknet.neoswing.GraphModel;
 import org.eknet.neoswing.NeoSwing;
 import org.eknet.neoswing.utils.NeoSwingUtil;
 import org.eknet.neoswing.utils.WindowUtil;
 import org.eknet.neoswing.view.control.SelectElementMousePlugin;
-import org.jetbrains.annotations.NotNull;
-import org.neo4j.graphdb.GraphDatabaseService;
-import org.neo4j.graphdb.Node;
-import org.neo4j.graphdb.PropertyContainer;
-import org.neo4j.graphdb.Relationship;
 
 import javax.swing.*;
 import java.awt.*;
@@ -61,22 +57,22 @@ public class GraphViewer extends JPanel implements GraphModel {
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
       if (evt.getPropertyName().equals(SelectElementMousePlugin.PROPERTY_NODE)) {
-        Node node = (Node) evt.getNewValue();
+        Vertex node = (Vertex) evt.getNewValue();
         relationTypesPanel.setNode(node);
         propertiesPanel.setElement(node);
       }
       if (evt.getPropertyName().equals(SelectElementMousePlugin.PROPERTY_RELATIONSHIP)) {
-        PropertyContainer el = (PropertyContainer) evt.getNewValue();
+        Element el = (Element) evt.getNewValue();
         propertiesPanel.setElement(el);
         relationTypesPanel.setNode(null);
       }
     }
   };
 
-  public GraphViewer(GraphDatabaseService db, ComponentFactory componentFactory) {
+  public GraphViewer(GraphDb db, ComponentFactory componentFactory) {
     DefaultVisualizationViewFactory factory = new DefaultVisualizationViewFactory() {
       @Override
-      protected void addMousePlugins(DefaultModalGraphMouse<Node, Relationship> plugin, GraphModel graphModel) {
+      protected void addMousePlugins(DefaultModalGraphMouse<Vertex, Edge> plugin, GraphModel graphModel) {
         super.addMousePlugins(plugin, graphModel);
         SelectElementMousePlugin selectPlugin = new SelectElementMousePlugin(MouseEvent.BUTTON1);
         selectPlugin.addPropertyChangeListener(panelUpdateListener);
@@ -88,7 +84,7 @@ public class GraphViewer extends JPanel implements GraphModel {
     initComponents();
   }
 
-  public GraphViewer(GraphDatabaseService db) {
+  public GraphViewer(GraphDb db) {
     this(db, NeoSwingUtil.getFactory(true));
   }
 
@@ -97,7 +93,7 @@ public class GraphViewer extends JPanel implements GraphModel {
 
     JSplitPane vsplit = componentFactory.createSplitPane();
     vsplit.setOrientation(JSplitPane.VERTICAL_SPLIT);
-    propertiesPanel = new PropertiesPanel(componentFactory, null);
+    propertiesPanel = new PropertiesPanel(graphPanel, componentFactory, null);
     vsplit.setLeftComponent(new JScrollPane(propertiesPanel));
     propertiesPanel.setPreferredSize(new Dimension(200, 50));
     relationTypesPanel = new RelationTypesPanel(componentFactory);
@@ -130,20 +126,17 @@ public class GraphViewer extends JPanel implements GraphModel {
   }
 
   @Override
-  @NotNull
-  public Graph<Node, Relationship> getGraph() {
+  public Graph<Vertex, Edge> getGraph() {
     return graphPanel.getGraph();
   }
 
   @Override
-  @NotNull
-  public VisualizationViewer<Node, Relationship> getViewer() {
+  public VisualizationViewer<Vertex, Edge> getViewer() {
     return graphPanel.getViewer();
   }
 
   @Override
-  @NotNull
-  public GraphDatabaseService getDatabase() {
+  public GraphDb getDatabase() {
     return graphPanel.getDatabase();
   }
 }

@@ -1,33 +1,28 @@
 /*
- * Copyright (c) 2012 Eike Kettner
+ * Copyright 2012 Eike Kettner
  *
- * This file is part of NeoSwing.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * NeoSwing is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
- * NeoSwing is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with NeoSwing.  If not, see <http://www.gnu.org/licenses/>.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 package org.eknet.neoswing.view;
 
+import com.tinkerpop.blueprints.Edge;
+import com.tinkerpop.blueprints.Element;
+import com.tinkerpop.blueprints.Vertex;
 import org.eknet.neoswing.ComponentFactory;
+import org.eknet.neoswing.GraphDb;
 import org.eknet.neoswing.utils.Dialog;
 import org.eknet.neoswing.utils.NeoSwingUtil;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.neo4j.graphdb.Node;
-import org.neo4j.graphdb.PropertyContainer;
-import org.neo4j.graphdb.Relationship;
-import org.neo4j.graphdb.Transaction;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -40,7 +35,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
 /**
- * A panel that allows to edit or add a property of a {@link PropertyContainer}.
+ * A panel that allows to edit or add a property of a {@link Element}.
  * <p/>
  * If a non-null key is supplied, the "edit" mode is uses. If the supplied key is null
  * this panel goes in "add" mode. The difference is, that in edit-mode the key is
@@ -48,7 +43,7 @@ import java.beans.PropertyChangeListener;
  * empty value is removing the property.
  * <p/>
  * A call to {@link #commit()} opens a neo4j transaction, sets the value from
- * the ui into the {@link PropertyContainer} and commits a transaction.
+ * the ui into the {@link Element} and commits a transaction.
  *
  * @author <a href="mailto:eike.kettner@gmail.com">Eike Kettner</a>
  * @since 11.01.12 20:37
@@ -59,8 +54,9 @@ public class PropertyEditor extends JPanel {
   public static final String PROPERTY_VALUE = "propertyValue";
 
   private final ComponentFactory componentFactory;
-  
-  private PropertyContainer element;
+  private final GraphDb database;
+
+  private Element element;
 
   private Border normalBorder;
   private Border errorBorder = BorderFactory.createLineBorder(Color.RED);
@@ -96,22 +92,23 @@ public class PropertyEditor extends JPanel {
   };
 
   
-  public PropertyEditor(@Nullable PropertyContainer element, @Nullable String key, @NotNull ComponentFactory factory) {
+  public PropertyEditor(GraphDb database, Element element, String key, ComponentFactory factory) {
     this.componentFactory = factory;
+    this.database = database;
     initComponents(key);
     setPropertyContainer(element, key);
   }
 
-  public PropertyEditor(@Nullable PropertyContainer element, @Nullable String key) {
-    this(element, key, NeoSwingUtil.getFactory(true));
+  public PropertyEditor(GraphDb database, Element element, String key) {
+    this(database, element, key, NeoSwingUtil.getFactory(true));
   }
 
-  public PropertyEditor(@NotNull ComponentFactory factory) {
-    this(null, null, factory);
+  public PropertyEditor(GraphDb database, ComponentFactory factory) {
+    this(database, null, null, factory);
   }
 
-  public PropertyEditor() {
-    this(null, null, NeoSwingUtil.getFactory(true));
+  public PropertyEditor(GraphDb database) {
+    this(database, null, null, NeoSwingUtil.getFactory(true));
   }
 
   /**
@@ -121,9 +118,9 @@ public class PropertyEditor extends JPanel {
    * @param key
    * @return
    */
-  public static Dialog inDialog(@NotNull PropertyContainer element, @Nullable String key) {
+  public static Dialog inDialog(GraphDb db, Element element, String key) {
     final Dialog dialog = new Dialog("Edit Property");
-    final PropertyEditor editor = new PropertyEditor(element, key);
+    final PropertyEditor editor = new PropertyEditor(db, element, key);
     editor.addPropertyChangeListener(new PropertyChangeListener() {
       @Override
       public void propertyChange(PropertyChangeEvent evt) {
@@ -144,7 +141,7 @@ public class PropertyEditor extends JPanel {
     return dialog;
   }
 
-  public void setPropertyContainer(@Nullable PropertyContainer container, @Nullable final String key) {
+  public void setPropertyContainer(Element container, final String key) {
     this.element = container;
     SwingUtilities.invokeLater(new Runnable() {
       @Override
@@ -176,14 +173,14 @@ public class PropertyEditor extends JPanel {
     if (this.element == null) {
       throw new IllegalStateException("No property container set");
     }
-    Transaction tx = element.getGraphDatabase().beginTx();
+    GraphDb.Tx tx = database.beginTx();
     try {
       String key = getKey();
       if (key == null) {
         throw new IllegalStateException("Key is required");
       }
       Object old = null;
-      if (element.hasProperty(key)) {
+      if (element.getProperty(key) != null) {
         old = element.getProperty(key);
       }
       Object value = readValue();
@@ -258,7 +255,7 @@ public class PropertyEditor extends JPanel {
     }
   }
   
-  private void initComponents(@Nullable String key) {
+  private void initComponents(String key) {
     GridBagLayout gbl = new GridBagLayout();
     setLayout(gbl);
     GridBagConstraints gbc = new GridBagConstraints();
@@ -355,11 +352,11 @@ public class PropertyEditor extends JPanel {
       infoLabel.setText(null);
       valueField.setText(null);
     } else {
-      infoLabel.setText(element instanceof Node ?
+      infoLabel.setText(element instanceof Vertex ?
           "Edit Property of Node " + NeoSwingUtil.getId(element) :
-          "Edit Property of Relationship " + NeoSwingUtil.getId(element) + " / " + ((Relationship) element).getType().name());
+          "Edit Property of Relationship " + NeoSwingUtil.getId(element) + " / " + ((Edge) element).getLabel());
       if (key != null) {
-        if (element.hasProperty(key)) {
+        if (element.getProperty(key) != null) {
           Object value = element.getProperty(key);
           valueField.setText(value.toString());
           PropertyType pt = PropertyType.forClass(value.getClass());
@@ -378,7 +375,7 @@ public class PropertyEditor extends JPanel {
       }
 
       @Override
-      public Object parse(@NotNull String value) {
+      public Object parse(String value) {
         return value;
       }
     },
@@ -389,7 +386,7 @@ public class PropertyEditor extends JPanel {
       }
 
       @Override
-      public Object parse(@NotNull String value) {
+      public Object parse(String value) {
         return java.lang.Long.parseLong(value);
       }
     },
@@ -400,7 +397,7 @@ public class PropertyEditor extends JPanel {
       }
 
       @Override
-      public Object parse(@NotNull String value) {
+      public Object parse(String value) {
         return java.lang.Byte.parseByte(value);
       }
     },
@@ -411,7 +408,7 @@ public class PropertyEditor extends JPanel {
       }
 
       @Override
-      public Object parse(@NotNull String value) {
+      public Object parse(String value) {
         return java.lang.Short.parseShort(value);
       }
     },
@@ -422,7 +419,7 @@ public class PropertyEditor extends JPanel {
       }
 
       @Override
-      public Object parse(@NotNull String value) {
+      public Object parse(String value) {
         return java.lang.Boolean.parseBoolean(value);
       }
     },
@@ -433,7 +430,7 @@ public class PropertyEditor extends JPanel {
       }
 
       @Override
-      public Object parse(@NotNull String value) {
+      public Object parse(String value) {
         return java.lang.Float.parseFloat(value);
       }
     },
@@ -444,7 +441,7 @@ public class PropertyEditor extends JPanel {
       }
 
       @Override
-      public Object parse(@NotNull String value) {
+      public Object parse(String value) {
         return java.lang.Double.parseDouble(value);
       }
     },
@@ -455,7 +452,7 @@ public class PropertyEditor extends JPanel {
       }
 
       @Override
-      public Object parse(@NotNull String value) {
+      public Object parse(String value) {
         return java.lang.Integer.parseInt(value);
       }
     };
@@ -472,6 +469,6 @@ public class PropertyEditor extends JPanel {
       throw new IllegalArgumentException("No property type for " + type);
     }
 
-    public abstract Object parse(@NotNull String value);
+    public abstract Object parse(String value);
   }
 }

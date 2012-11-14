@@ -1,47 +1,32 @@
 /*
- * Copyright (c) 2012 Eike Kettner
+ * Copyright 2012 Eike Kettner
  *
- * This file is part of NeoSwing.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * NeoSwing is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
- * NeoSwing is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with NeoSwing.  If not, see <http://www.gnu.org/licenses/>.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 package org.eknet.neoswing.view.control;
 
+import com.tinkerpop.blueprints.Direction;
+import com.tinkerpop.blueprints.Edge;
+import com.tinkerpop.blueprints.Vertex;
 import edu.uci.ics.jung.visualization.VisualizationViewer;
 import org.eknet.neoswing.ComponentFactory;
 import org.eknet.neoswing.GraphModel;
-import org.eknet.neoswing.actions.CollapseNodeAction;
-import org.eknet.neoswing.actions.CreateRelationshipAction;
-import org.eknet.neoswing.actions.DeleteElementAction;
-import org.eknet.neoswing.actions.EditPropertyAction;
-import org.eknet.neoswing.actions.ExpandNodeAction;
-import org.eknet.neoswing.actions.HideElementAction;
-import org.eknet.neoswing.actions.RemoveDefaultLabelAction;
+import org.eknet.neoswing.actions.*;
 import org.eknet.neoswing.utils.NeoSwingUtil;
-import org.jetbrains.annotations.NotNull;
-import org.neo4j.graphdb.Direction;
-import org.neo4j.graphdb.Node;
-import org.neo4j.graphdb.Relationship;
 
-import javax.swing.Action;
-import javax.swing.JLabel;
-import javax.swing.JMenuItem;
-import javax.swing.JPopupMenu;
-import javax.swing.SwingConstants;
-import java.awt.Font;
-import java.awt.Window;
+import javax.swing.*;
+import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
@@ -70,22 +55,22 @@ public class NodePopupMenu extends AbstractMousePlugin {
     if (e.getButton() != modifiers || !e.isPopupTrigger()) {
       return;
     }
-    VisualizationViewer<Node, Relationship> viewer = getViewer(e);
+    VisualizationViewer<Vertex, Edge> viewer = getViewer(e);
 
     down = e.getPoint();
-    Node node = viewer.getPickSupport().getVertex(viewer.getGraphLayout(), down.getX(), down.getY());
+    Vertex node = viewer.getPickSupport().getVertex(viewer.getGraphLayout(), down.getX(), down.getY());
     if (node != null) {
       JPopupMenu menu = getPopup(node, viewer);
       menu.show(viewer, down.x, down.y);
     }
-    Relationship relationship = viewer.getPickSupport().getEdge(viewer.getGraphLayout(), down.getX(), down.getY());
+    Edge relationship = viewer.getPickSupport().getEdge(viewer.getGraphLayout(), down.getX(), down.getY());
     if (relationship != null) {
       JPopupMenu menu = getPopup(relationship, viewer);
       menu.show(viewer, down.x, down.y);
     }
   }
   
-  protected JPopupMenu getPopup(@NotNull Node node, @NotNull VisualizationViewer<Node, Relationship> viewer) {
+  protected JPopupMenu getPopup(Vertex node, VisualizationViewer<Vertex, Edge> viewer) {
     JPopupMenu menu = factory.createPopupMenu();
     Window owner = NeoSwingUtil.findOwner(viewer);
 
@@ -104,23 +89,23 @@ public class NodePopupMenu extends AbstractMousePlugin {
 
     menu.addSeparator();
     List<Action> createRelationshipActions = new ArrayList<Action>();
-    CreateRelationshipAction createRel = new CreateRelationshipAction(graphModel.getGraph(), node, Direction.INCOMING);
+    CreateRelationshipAction createRel = new CreateRelationshipAction(graphModel, node, Direction.IN);
     createRel.setWindow(owner);
     createRelationshipActions.add(createRel);
     
-    createRel = new CreateRelationshipAction(graphModel.getGraph(), node, Direction.OUTGOING);
+    createRel = new CreateRelationshipAction(graphModel, node, Direction.OUT);
     createRel.setWindow(owner);
     createRelationshipActions.add(createRel);
     
-    Set<Node> picked = viewer.getPickedVertexState().getPicked();
+    Set<Vertex> picked = viewer.getPickedVertexState().getPicked();
     if (picked.size() == 1) {
-      Node other = new ArrayList<Node>(picked).get(0);
-      createRel = new CreateRelationshipAction(graphModel.getGraph(), node, Direction.INCOMING);
+      Vertex other = new ArrayList<Vertex>(picked).get(0);
+      createRel = new CreateRelationshipAction(graphModel, node, Direction.IN);
       createRel.setOther(other);
       createRel.setWindow(owner);
       createRelationshipActions.add(createRel);
 
-      createRel = new CreateRelationshipAction(graphModel.getGraph(), node, Direction.OUTGOING);
+      createRel = new CreateRelationshipAction(graphModel, node, Direction.OUT);
       createRel.setOther(other);
       createRel.setWindow(owner);
       createRelationshipActions.add(createRel);
@@ -128,7 +113,7 @@ public class NodePopupMenu extends AbstractMousePlugin {
     factory.addMenuItemGroup(menu, createRelationshipActions);
 
     menu.add(new JPopupMenu.Separator());
-    EditPropertyAction editAction = new EditPropertyAction(node);
+    EditPropertyAction editAction = new EditPropertyAction(node, graphModel.getDatabase());
     editAction.setWindow(owner);
     menu.add(new JMenuItem(editAction));
     
@@ -138,11 +123,11 @@ public class NodePopupMenu extends AbstractMousePlugin {
     menu.add(new JMenuItem(deleteAction));
 
     menu.addSeparator();
-    menu.add(new JMenuItem(new RemoveDefaultLabelAction(node)));
+    menu.add(new JMenuItem(new RemoveDefaultLabelAction(graphModel.getDatabase(), node)));
     return menu;
   }
 
-  protected JPopupMenu getPopup(Relationship relationship, VisualizationViewer<Node, Relationship> viewer) {
+  protected JPopupMenu getPopup(Edge relationship, VisualizationViewer<Vertex, Edge> viewer) {
     JPopupMenu menu = factory.createPopupMenu();
     JLabel label = new JLabel("Relationship Actions");
     label.setFont(label.getFont().deriveFont(Font.BOLD));
@@ -152,7 +137,7 @@ public class NodePopupMenu extends AbstractMousePlugin {
     GraphModel graphModel = NeoSwingUtil.getGraphModel(viewer);
 
     menu.add(new JPopupMenu.Separator());
-    EditPropertyAction editAction = new EditPropertyAction(relationship);
+    EditPropertyAction editAction = new EditPropertyAction(relationship, graphModel.getDatabase());
     editAction.setWindow(owner);
     menu.add(new JMenuItem(editAction));
 
@@ -164,19 +149,19 @@ public class NodePopupMenu extends AbstractMousePlugin {
     return menu;
   }
 
-  private Iterable<Action> getAllExpandActions(Node node, GraphModel model) {
+  private Iterable<Action> getAllExpandActions(Vertex node, GraphModel model) {
     List<Action> list = new ArrayList<Action>();
     list.add(new ExpandNodeAction(node, model, Direction.BOTH));
-    list.add(new ExpandNodeAction(node, model, Direction.OUTGOING));
-    list.add(new ExpandNodeAction(node, model, Direction.INCOMING));
+    list.add(new ExpandNodeAction(node, model, Direction.OUT));
+    list.add(new ExpandNodeAction(node, model, Direction.IN));
     return list;
   }
 
-  private Iterable<Action> getAllCollapseActions(Node node, GraphModel graphModel) {
+  private Iterable<Action> getAllCollapseActions(Vertex node, GraphModel graphModel) {
     List<Action> list = new ArrayList<Action>();
     list.add(new CollapseNodeAction(node, graphModel, Direction.BOTH));
-    list.add(new CollapseNodeAction(node, graphModel, Direction.OUTGOING));
-    list.add(new CollapseNodeAction(node, graphModel, Direction.INCOMING));
+    list.add(new CollapseNodeAction(node, graphModel, Direction.OUT));
+    list.add(new CollapseNodeAction(node, graphModel, Direction.IN));
     return list;
   }
 }

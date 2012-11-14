@@ -16,11 +16,7 @@
 
 package org.eknet.neoswing.utils;
 
-import org.jetbrains.annotations.NotNull;
-
-import java.awt.Component;
-import java.awt.Rectangle;
-import java.awt.Window;
+import java.awt.*;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
@@ -71,7 +67,7 @@ class DefaultWindowPlacementManager {
     bindToPrefs(window, prefs, keyFormat + "-%s");
   }
 
-  public void bindToPrefs(@NotNull Window window, @NotNull Preferences prefs, @NotNull String keyFormat) {
+  public void bindToPrefs(Window window, Preferences prefs, String keyFormat) {
     BindingKey key = new BindingKey(prefs, keyFormat);
     Binding binding = prefsBindings.get(key);
     if ( binding == null ) {

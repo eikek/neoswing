@@ -1,50 +1,41 @@
 /*
- * Copyright (c) 2012 Eike Kettner
+ * Copyright 2012 Eike Kettner
  *
- * This file is part of NeoSwing.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * NeoSwing is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
- * NeoSwing is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with NeoSwing.  If not, see <http://www.gnu.org/licenses/>.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 package org.eknet.neoswing.utils;
 
+import com.tinkerpop.blueprints.Direction;
+import com.tinkerpop.blueprints.Edge;
+import com.tinkerpop.blueprints.Element;
+import com.tinkerpop.blueprints.Vertex;
 import edu.uci.ics.jung.graph.Graph;
 import edu.uci.ics.jung.graph.util.EdgeType;
 import org.eknet.neoswing.ComponentFactory;
 import org.eknet.neoswing.DefaultComponentFactory;
 import org.eknet.neoswing.GraphModel;
 import org.eknet.neoswing.JideComponentFactory;
-import org.jetbrains.annotations.NotNull;
-import org.neo4j.graphdb.Node;
-import org.neo4j.graphdb.PropertyContainer;
-import org.neo4j.graphdb.Relationship;
+import org.eknet.neoswing.loader.Neo4JEmbeddedLoader;
+import org.eknet.neoswing.loader.OrientDbLoader;
+import org.eknet.neoswing.loader.TitanLoader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.swing.Action;
-import javax.swing.Icon;
-import javax.swing.ImageIcon;
+import javax.swing.*;
 import javax.swing.border.Border;
-import java.awt.Component;
-import java.awt.Graphics;
-import java.awt.Image;
-import java.awt.Insets;
-import java.awt.Window;
+import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.io.File;
-import java.io.FileFilter;
-import java.io.FilenameFilter;
 import java.io.IOException;
 import java.net.URL;
 import java.util.Properties;
@@ -153,7 +144,19 @@ public final class NeoSwingUtil {
     throw new IllegalStateException("No holder found in hierarchy.");
   }
 
-  public static Icon icon(@NotNull String name) {
+  public static Icon graphDbIcon(String name) {
+    if (name.equals(Neo4JEmbeddedLoader.NAME)) {
+      return icon("neo4j");
+    }
+    if (name.equals(TitanLoader.NAME)) {
+      return icon("titan");
+    }
+    if (name.equals(OrientDbLoader.NAME)) {
+      return icon("orientdb");
+    }
+    return icon("folder_database");
+  }
+  public static Icon icon(String name) {
     if (!name.endsWith("png")) {
       name = name + ".png";
     }
@@ -165,11 +168,11 @@ public final class NeoSwingUtil {
     return new ImageIcon(url);
   }
 
-  public static void addEdge(Graph<Node, Relationship> graph, Relationship relationship) {
+  public static void addEdge(Graph<Vertex, Edge> graph, Edge relationship) {
     if (!graph.containsEdge(relationship)) {
       graph.addEdge(relationship,
-              relationship.getStartNode(),
-              relationship.getEndNode(),
+              relationship.getVertex(Direction.OUT),
+              relationship.getVertex(Direction.IN),
               EdgeType.DIRECTED);
     }
   }
@@ -222,17 +225,11 @@ public final class NeoSwingUtil {
    * @param pc
    * @return
    */
-  public static long getId(PropertyContainer pc) {
-    if (pc instanceof Node) {
-      return ((Node) pc).getId();
-    }
-    if (pc instanceof Relationship) {
-      return ((Relationship) pc).getId();
-    }
-    throw new RuntimeException("Unknown " + PropertyContainer.class + ": " + pc);
+  public static String getId(Element pc) {
+    return pc.getId().toString();
   }
 
-  public static boolean equals(PropertyContainer pc1, PropertyContainer pc2) {
+  public static boolean equals(Element pc1, Element pc2) {
     if (pc1 == null && pc2 == null) {
       return true;
     }
@@ -246,29 +243,6 @@ public final class NeoSwingUtil {
       return false;
     }
     return NeoSwingUtil.getId(pc1) == NeoSwingUtil.getId(pc2);
-  }
-
-  public static void checkDatabaseDirectory(@NotNull File db) throws IllegalArgumentException {
-    if (!db.isDirectory()) {
-      throw new IllegalArgumentException("'" + db + "' is not a directory");
-    }
-    File[] content = db.listFiles(new FileFilter() {
-      @Override
-      public boolean accept(File pathname) {
-        return pathname.isFile();
-      }
-    });
-    if (content.length > 0) {
-      content = db.listFiles(new FilenameFilter() {
-        @Override
-        public boolean accept(File dir, String name) {
-          return name.startsWith("neostore");
-        }
-      });
-      if (content.length == 0) {
-        throw new IllegalArgumentException("'" + db + "' doesn't seem to be a neo4j database.");
-      }
-    }
   }
 
   // ~~ code below is copied from cru-swing class SwingUtil

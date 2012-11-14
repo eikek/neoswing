@@ -1,30 +1,27 @@
 /*
- * Copyright (c) 2012 Eike Kettner
+ * Copyright 2012 Eike Kettner
  *
- * This file is part of NeoSwing.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * NeoSwing is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
- * NeoSwing is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with NeoSwing.  If not, see <http://www.gnu.org/licenses/>.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 package org.eknet.neoswing.view;
 
+import com.tinkerpop.blueprints.Edge;
+import com.tinkerpop.blueprints.Element;
+import com.tinkerpop.blueprints.Vertex;
 import org.eknet.neoswing.ComponentFactory;
+import org.eknet.neoswing.GraphDb;
 import org.eknet.neoswing.utils.NeoSwingUtil;
-import org.neo4j.graphdb.GraphDatabaseService;
-import org.neo4j.graphdb.Node;
-import org.neo4j.graphdb.PropertyContainer;
-import org.neo4j.graphdb.Relationship;
 
 import javax.swing.*;
 import java.awt.*;
@@ -36,7 +33,7 @@ import java.awt.*;
 public class SelectIndexPanel extends JPanel {
 
   private final ComponentFactory factory;
-  private final GraphDatabaseService db;
+  private final GraphDb db;
 
   private JComboBox nodeIndexCombo;
   private JTextField nodeQueryField;
@@ -46,13 +43,13 @@ public class SelectIndexPanel extends JPanel {
 
   private JTabbedPane tabs;
 
-  public SelectIndexPanel(GraphDatabaseService db, ComponentFactory factory) {
+  public SelectIndexPanel(GraphDb db, ComponentFactory factory) {
     this.db = db;
     this.factory = factory;
     initComponents();
   }
 
-  public SelectIndexPanel(GraphDatabaseService db) {
+  public SelectIndexPanel(GraphDb db) {
     this(db, NeoSwingUtil.getFactory(true));
   }
 
@@ -66,13 +63,13 @@ public class SelectIndexPanel extends JPanel {
 
     tabs = factory.createTabbedPane();
     add(tabs, BorderLayout.CENTER);
-    JPanel nodeTab = createIndexPanel(Node.class);
+    JPanel nodeTab = createIndexPanel(Vertex.class);
     tabs.addTab("Nodes", nodeTab);
-    JPanel relationTab = createIndexPanel(Relationship.class);
+    JPanel relationTab = createIndexPanel(Edge.class);
     tabs.addTab("Relationships", relationTab);
   }
 
-  private JPanel createIndexPanel(Class<? extends PropertyContainer> type) {
+  private JPanel createIndexPanel(Class<? extends Element> type) {
     JPanel input = factory.createPanel();
     input.setLayout(new GridBagLayout());
 
@@ -87,7 +84,7 @@ public class SelectIndexPanel extends JPanel {
     gbc.weightx = 0.2;
     input.add(indexLabel, gbc);
 
-    String[] names = isNodeIndex(type) ? db.index().nodeIndexNames() : db.index().relationshipIndexNames();
+    String[] names = isNodeIndex(type) ? db.nodeIndexNames() : db.relationshipIndexNames();
     JComboBox indexCombo = factory.createComboBox(names, true, false);
     gbc.gridx = 1;
     gbc.weightx = 0.8;
@@ -142,11 +139,11 @@ public class SelectIndexPanel extends JPanel {
     return tabs.getSelectedIndex() == 1;
   }
   
-  public static boolean isRelationshipIndex(Class<? extends PropertyContainer> type) {
-    return Relationship.class.isAssignableFrom(type);
+  public static boolean isRelationshipIndex(Class<? extends Element> type) {
+    return Edge.class.isAssignableFrom(type);
   }
 
-  public static boolean isNodeIndex(Class<? extends PropertyContainer> type) {
-    return Node.class.isAssignableFrom(type);
+  public static boolean isNodeIndex(Class<? extends Element> type) {
+    return Vertex.class.isAssignableFrom(type);
   }
 }

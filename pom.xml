@@ -1,22 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <!--
-  ~ Copyright (c) 2012 Eike Kettner
+  ~ Copyright 2012 Eike Kettner
   ~
-  ~ This file is part of NeoSwing.
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
   ~
-  ~ NeoSwing is free software: you can redistribute it and/or modify
-  ~ it under the terms of the GNU General Public License as published by
-  ~ the Free Software Foundation, either version 3 of the License, or
-  ~ (at your option) any later version.
+  ~     http://www.apache.org/licenses/LICENSE-2.0
   ~
-  ~ NeoSwing is distributed in the hope that it will be useful,
-  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
-  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  ~ GNU General Public License for more details.
-  ~
-  ~ You should have received a copy of the GNU General Public License
-  ~ along with NeoSwing.  If not, see <http://www.gnu.org/licenses />.
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
   -->
 
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
@@ -25,7 +22,7 @@
 
   <groupId>org.eknet.neoswing</groupId>
   <artifactId>neoswing</artifactId>
-  <version>1.0.3-SNAPSHOT</version>
+  <version>2.0.0-SNAPSHOT</version>
   <packaging>bundle</packaging>
 
   <name>NeoSwing</name>
@@ -33,8 +30,9 @@
 
   <licenses>
     <license>
-      <name>GNU General Public License (GPL)</name>
-      <url>http://www.gnu.org/licenses/gpl.html</url>
+      <name>The Apache Software License, Version 2.0</name>
+      <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+      <distribution>repo</distribution>
     </license>
   </licenses>
 
@@ -42,21 +40,15 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <maven.build.timestamp.format>yyyy-MM-dd HH:mmZ</maven.build.timestamp.format>
     <build.timestamp>${maven.build.timestamp}</build.timestamp>
-    <guava.version>12.0.1</guava.version>
-    <neo4j.version>1.5</neo4j.version>
-    <karaf.version>2.2.5</karaf.version>
-    <neo4j.bundle.version>1.5_01</neo4j.bundle.version>
+    <guava.version>13.0.1</guava.version>
+    <jide-oss.version>3.4.8</jide-oss.version>
+    <slf4j.version>1.7.2</slf4j.version>
+    <blueprints.version>2.1.0</blueprints.version>
+    <logback.version>1.0.7</logback.version>
     <jung.version>2.0.1</jung.version>
-    <jung.bundle.version>2.0.1-001</jung.bundle.version>
-    <jide-oss.version>2.10.2</jide-oss.version>
-    <slf4j.version>1.6.4</slf4j.version>
   </properties>
 
   <dependencies>
-    <dependency>
-      <groupId>org.jetbrains</groupId>
-      <artifactId>annotations</artifactId>
-    </dependency>
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
@@ -64,27 +56,25 @@
     <dependency>
       <groupId>ch.qos.logback</groupId>
       <artifactId>logback-classic</artifactId>
-      <version>1.0.1</version>
+      <version>${logback.version}</version>
+      <exclusions>
+        <exclusion>
+          <groupId>org.slf4j</groupId>
+          <artifactId>slf4j-api</artifactId>
+        </exclusion>
+      </exclusions>
       <scope>runtime</scope>
     </dependency>
-
-    <dependency>
-      <groupId>org.neo4j</groupId>
-      <artifactId>neo4j-kernel</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.neo4j</groupId>
-      <artifactId>neo4j-lucene-index</artifactId>
-    </dependency>
-
     <dependency>
       <groupId>com.jidesoft</groupId>
       <artifactId>jide-oss</artifactId>
       <version>${jide-oss.version}</version>
       <optional>true</optional>
     </dependency>
-
-    <!-- JUNG -->
+    <dependency>
+      <groupId>com.tinkerpop.blueprints</groupId>
+      <artifactId>blueprints-core</artifactId>
+    </dependency>
     <dependency>
       <groupId>net.sf.jung</groupId>
       <artifactId>jung-api</artifactId>
@@ -99,6 +89,35 @@
       <groupId>net.sf.jung</groupId>
       <artifactId>jung-visualization</artifactId>
       <version>${jung.version}</version>
+    </dependency>
+
+    <!-- optional dependencies -->
+    <dependency>
+      <groupId>com.tinkerpop.blueprints</groupId>
+      <artifactId>blueprints-orient-graph</artifactId>
+      <version>${blueprints.version}</version>
+      <scope>runtime</scope>
+      <optional>true</optional>
+    </dependency>
+    <dependency>
+      <groupId>com.thinkaurelius.titan</groupId>
+      <artifactId>titan</artifactId>
+      <version>0.1.0</version>
+      <scope>runtime</scope>
+      <optional>true</optional>
+      <exclusions>
+        <exclusion>
+          <groupId>org.slf4j</groupId>
+          <artifactId>slf4j-log4j12</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>com.tinkerpop.blueprints</groupId>
+      <artifactId>blueprints-neo4j-graph</artifactId>
+      <version>${blueprints.version}</version>
+      <scope>runtime</scope>
+      <optional>true</optional>
     </dependency>
   </dependencies>
   
@@ -185,7 +204,6 @@
             <links>
               <link>http://docs.guava-libraries.googlecode.com/git/javadoc/</link>
               <link>http://download.oracle.com/javase/6/docs/api/</link>
-              <link>http://api.neo4j.org/current/</link>
             </links>
           </configuration>
         </plugin>
@@ -339,24 +357,24 @@
         <version>${slf4j.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.jetbrains</groupId>
-        <artifactId>annotations</artifactId>
-        <version>10.0</version>
-      </dependency>
-      <dependency>
         <groupId>com.google.guava</groupId>
         <artifactId>guava</artifactId>
         <version>${guava.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.neo4j</groupId>
-        <artifactId>neo4j-kernel</artifactId>
-        <version>${neo4j.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.neo4j</groupId>
-        <artifactId>neo4j-lucene-index</artifactId>
-        <version>${neo4j.version}</version>
+        <groupId>com.tinkerpop.blueprints</groupId>
+        <artifactId>blueprints-core</artifactId>
+        <version>${blueprints.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>org.codehaus.jackson</groupId>
+            <artifactId>jackson-core-asl</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.codehaus.jackson</groupId>
+            <artifactId>jackson-mapper-asl</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
     </dependencies>
   </dependencyManagement>
@@ -378,10 +396,4 @@
     </repository>
   </distributionManagement>
 
-  <repositories>
-    <repository>
-      <id>eknet-maven2</id>
-      <url>https://eknet.org/maven2</url>
-    </repository>
-  </repositories>  
 </project>

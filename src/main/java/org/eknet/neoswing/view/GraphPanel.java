@@ -1,37 +1,32 @@
 /*
- * Copyright (c) 2012 Eike Kettner
+ * Copyright 2012 Eike Kettner
  *
- * This file is part of NeoSwing.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * NeoSwing is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
- * NeoSwing is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with NeoSwing.  If not, see <http://www.gnu.org/licenses/>.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 package org.eknet.neoswing.view;
 
+import com.tinkerpop.blueprints.Edge;
+import com.tinkerpop.blueprints.Vertex;
 import edu.uci.ics.jung.graph.Graph;
 import edu.uci.ics.jung.visualization.GraphZoomScrollPane;
 import edu.uci.ics.jung.visualization.VisualizationViewer;
 import org.eknet.neoswing.*;
 import org.eknet.neoswing.actions.AddNodeAction;
 import org.eknet.neoswing.actions.ResetAction;
-import org.eknet.neoswing.actions.SearchIndexAction;
+import org.eknet.neoswing.actions.SearchAction;
 import org.eknet.neoswing.utils.NeoSwingUtil;
 import org.eknet.neoswing.utils.SimpleGraphModel;
-import org.jetbrains.annotations.NotNull;
-import org.neo4j.graphdb.GraphDatabaseService;
-import org.neo4j.graphdb.Node;
-import org.neo4j.graphdb.Relationship;
 
 import javax.swing.*;
 import java.awt.*;
@@ -58,15 +53,15 @@ public class GraphPanel extends JPanel implements GraphModel {
   private final GraphModel graphModel;
   private final ComponentFactory factory;
 
-  public GraphPanel(@NotNull GraphDatabaseService db) {
+  public GraphPanel(GraphDb db) {
     this(db, new DefaultVisualizationViewFactory(), NeoSwingUtil.getFactory(true));
   }
 
-  public GraphPanel(@NotNull GraphDatabaseService db, @NotNull VisualizationViewFactory factory, @NotNull ComponentFactory componentFactory) {
+  public GraphPanel(GraphDb db, VisualizationViewFactory factory, ComponentFactory componentFactory) {
     this(new SimpleGraphModel(db, factory), componentFactory);
   }
 
-  public GraphPanel(@NotNull GraphModel model, ComponentFactory componentFactory) {
+  public GraphPanel(GraphModel model, ComponentFactory componentFactory) {
     super(new BorderLayout(), true);
     this.graphModel = model;
     this.factory = componentFactory;
@@ -112,26 +107,23 @@ public class GraphPanel extends JPanel implements GraphModel {
 
     // search index
     JButton findButton = factory.createToolbarButton();
-    findButton.setAction(new SearchIndexAction(getDatabase(), getGraph()));
+    findButton.setAction(new SearchAction(getDatabase(), getGraph()));
     bar.add(findButton);
     return bar;
   }
 
-  @NotNull
   @Override
-  public Graph<Node, Relationship> getGraph() {
+  public Graph<Vertex, Edge> getGraph() {
     return graphModel.getGraph();
   }
 
-  @NotNull
   @Override
-  public VisualizationViewer<Node, Relationship> getViewer() {
+  public VisualizationViewer<Vertex, Edge> getViewer() {
     return graphModel.getViewer();
   }
 
-  @NotNull
   @Override
-  public GraphDatabaseService getDatabase() {
+  public GraphDb getDatabase() {
     return graphModel.getDatabase();
   }
 

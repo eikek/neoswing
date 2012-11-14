@@ -1,33 +1,31 @@
 /*
- * Copyright (c) 2012 Eike Kettner
+ * Copyright 2012 Eike Kettner
  *
- * This file is part of NeoSwing.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * NeoSwing is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
- * NeoSwing is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with NeoSwing.  If not, see <http://www.gnu.org/licenses/>.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 package org.eknet.neoswing.actions;
 
-import java.awt.event.ActionEvent;
-
+import com.tinkerpop.blueprints.Direction;
+import com.tinkerpop.blueprints.Edge;
+import com.tinkerpop.blueprints.Vertex;
 import edu.uci.ics.jung.graph.Graph;
 import edu.uci.ics.jung.visualization.VisualizationViewer;
+import org.eknet.neoswing.GraphDb;
 import org.eknet.neoswing.GraphModel;
 import org.eknet.neoswing.utils.NeoSwingUtil;
-import org.neo4j.graphdb.Direction;
-import org.neo4j.graphdb.Node;
-import org.neo4j.graphdb.Relationship;
+
+import java.awt.event.ActionEvent;
 
 /**
  * @author <a href="mailto:eike.kettner@gmail.com">Eike Kettner</a>
@@ -35,12 +33,12 @@ import org.neo4j.graphdb.Relationship;
  */
 public class CollapseNodeAction extends AbstractSwingAction {
 
-  private final VisualizationViewer<Node, Relationship> viewer;
-  private final Graph<Node, Relationship> graph;
-  private final Node node;
+  private final VisualizationViewer<Vertex, Edge> viewer;
+  private final Graph<Vertex, Edge> graph;
+  private final Vertex node;
   private final Direction direction;
   
-  public CollapseNodeAction(Node node, GraphModel graphModel, Direction direction) {
+  public CollapseNodeAction(Vertex node, GraphModel graphModel, Direction direction) {
     this.viewer = graphModel.getViewer();
     this.graph = graphModel.getGraph();
     this.node = node;
@@ -52,12 +50,10 @@ public class CollapseNodeAction extends AbstractSwingAction {
   
   @Override
   public void actionPerformed(ActionEvent e) {
-    for (Relationship relationship : node.getRelationships(direction)) {
-      Node other = relationship.getOtherNode(node);
-      if (other.getId() != 0L) {
-        graph.removeEdge(relationship);
-        graph.removeVertex(other);
-      }
+    for (Edge relationship : node.getEdges(direction)) {
+      Vertex other = GraphDb.getOtherNode(relationship, node);
+      graph.removeEdge(relationship);
+      graph.removeVertex(other);
     }
     viewer.repaint();
   }

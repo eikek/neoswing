@@ -1,38 +1,31 @@
 /*
- * Copyright (c) 2012 Eike Kettner
+ * Copyright 2012 Eike Kettner
  *
- * This file is part of NeoSwing.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * NeoSwing is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
- * NeoSwing is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with NeoSwing.  If not, see <http://www.gnu.org/licenses/>.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 package org.eknet.neoswing.view;
 
+import com.tinkerpop.blueprints.Edge;
+import com.tinkerpop.blueprints.Element;
+import com.tinkerpop.blueprints.Vertex;
 import org.eknet.neoswing.ComponentFactory;
+import org.eknet.neoswing.GraphModel;
 import org.eknet.neoswing.actions.DeletePropertyAction;
 import org.eknet.neoswing.actions.EditPropertyAction;
 import org.eknet.neoswing.actions.SetDefaultLabelAction;
 import org.eknet.neoswing.utils.NeoSwingUtil;
 import org.eknet.neoswing.utils.PopupTrigger;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.neo4j.graphdb.Node;
-import org.neo4j.graphdb.PropertyContainer;
-import org.neo4j.graphdb.Relationship;
-import org.neo4j.graphdb.event.PropertyEntry;
-import org.neo4j.graphdb.event.TransactionData;
-import org.neo4j.graphdb.event.TransactionEventHandler;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
@@ -41,10 +34,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Shows the properties of a {@link PropertyContainer}.
+ * Shows the properties of a {@link Element}.
  * <p/>
- * Do not use the same instance for {@link PropertyContainer}s coming from
- * different databases (or change the class to cleanup the {@link TransactionEventHandler}
+ * Do not use the same instance for {@link Element}s coming from
+ * different databases (or change the class to cleanup the {@code TransactionEventHandler}
  * properly).
  * 
  * @author <a href="mailto:eike.kettner@gmail.com">Eike Kettner</a>
@@ -52,67 +45,68 @@ import java.util.List;
  */
 public class PropertiesPanel extends JPanel {
 
-  private PropertyContainer element;
+  private Element element;
 
   private final ComponentFactory factory;
   private final PropertiesTableModel tableModel = new PropertiesTableModel();
-  private final TransactionEventHandler<Boolean> updateHandler = new TransactionEventHandler<Boolean>() {
-    @Override
-    public Boolean beforeCommit(TransactionData data) throws Exception {
-      if (element instanceof Node) {
-        Node node = (Node) element;
-        if (data.isDeleted(node)) {
-          return null;
-        } else {
-          for (PropertyEntry<Node> entry : data.assignedNodeProperties()) {
-            if (entry.entity().getId() == node.getId()) {
-              return true;
-            }
-          }
-          for (PropertyEntry<Node> entry : data.removedNodeProperties()) {
-            if (entry.entity().getId() == node.getId()) {
-              return true;
-            }
-          }
-        } 
-      }
-      if (element instanceof Relationship) {
-        Relationship relationship = (Relationship) element;
-        if (data.isDeleted(relationship)) {
-          return null;
-        } else {
-          for (PropertyEntry<Relationship> entry : data.assignedRelationshipProperties()) {
-            if (entry.entity().getId() == relationship.getId()) {
-              return true;
-            }
-          }
-          for (PropertyEntry<Relationship> entry : data.assignedRelationshipProperties()) {
-            if (entry.entity().getId() == relationship.getId()) {
-              return true;
-            }
-          }
-        }
-      }
-      return false;
-    }
+//  private final TransactionEventHandler<Boolean> updateHandler = new TransactionEventHandler<Boolean>() {
+//    @Override
+//    public Boolean beforeCommit(TransactionData data) throws Exception {
+//      if (element instanceof Node) {
+//        Node node = (Node) element;
+//        if (data.isDeleted(node)) {
+//          return null;
+//        } else {
+//          for (PropertyEntry<Node> entry : data.assignedNodeProperties()) {
+//            if (entry.entity().getId() == node.getId()) {
+//              return true;
+//            }
+//          }
+//          for (PropertyEntry<Node> entry : data.removedNodeProperties()) {
+//            if (entry.entity().getId() == node.getId()) {
+//              return true;
+//            }
+//          }
+//        }
+//      }
+//      if (element instanceof Relationship) {
+//        Relationship relationship = (Relationship) element;
+//        if (data.isDeleted(relationship)) {
+//          return null;
+//        } else {
+//          for (PropertyEntry<Relationship> entry : data.assignedRelationshipProperties()) {
+//            if (entry.entity().getId() == relationship.getId()) {
+//              return true;
+//            }
+//          }
+//          for (PropertyEntry<Relationship> entry : data.assignedRelationshipProperties()) {
+//            if (entry.entity().getId() == relationship.getId()) {
+//              return true;
+//            }
+//          }
+//        }
+//      }
+//      return false;
+//    }
+//
+//    @Override
+//    public void afterCommit(TransactionData data, Boolean state) {
+//      if (state == null) {
+//        setElement(null);
+//        updateComponents();
+//      }
+//      if (state != null && state) {
+//        updateComponents();
+//      }
+//    }
+//
+//    @Override
+//    public void afterRollback(TransactionData data, Boolean state) {
+//    }
+//  };
 
-    @Override
-    public void afterCommit(TransactionData data, Boolean state) {
-      if (state == null) {
-        setElement(null);
-        updateComponents();
-      }
-      if (state != null && state) {
-        updateComponents();
-      }
-    }
-
-    @Override
-    public void afterRollback(TransactionData data, Boolean state) {
-    }
-  };
-
-  private final EditPropertyAction addPropertyAction = new EditPropertyAction();
+  private final GraphModel model;
+  private final EditPropertyAction addPropertyAction;
 
   private JLabel infoLabel;
   private JTable table;
@@ -124,10 +118,13 @@ public class PropertiesPanel extends JPanel {
     }
   };
   
-  public PropertiesPanel(@NotNull ComponentFactory factory, @Nullable final PropertyContainer element) {
+  public PropertiesPanel(GraphModel model, ComponentFactory factory, final Element element) {
     super(new BorderLayout(), true);
     this.element = element;
     this.factory = factory;
+    this.model = model;
+    this.addPropertyAction = new EditPropertyAction(model.getDatabase());
+
 
     table = factory.createTable();
     table.setModel(tableModel);
@@ -137,15 +134,6 @@ public class PropertiesPanel extends JPanel {
     add(createHeadPanel(), BorderLayout.NORTH);
     updateComponents();
   }
-
-  public PropertiesPanel(PropertyContainer element) {
-    this(NeoSwingUtil.getFactory(true), element);
-  }
-  
-  public PropertiesPanel() {
-    this(NeoSwingUtil.getFactory(true), null);
-  }
-
 
 
   private JPanel createHeadPanel() {
@@ -175,27 +163,27 @@ public class PropertiesPanel extends JPanel {
     if (element != null) {
       StringBuilder text = new StringBuilder();
       text.append("Properties of ");
-      if (element instanceof Node) {
-        Node node = (Node) element;
+      if (element instanceof Vertex) {
+        Vertex node = (Vertex) element;
         text.append("node ").append(node.getId());
       }
-      if (element instanceof Relationship) {
-        Relationship relationship = (Relationship) element;
+      if (element instanceof Edge) {
+        Edge relationship = (Edge) element;
         text.append("relationship ")
             .append(relationship.getId())
             .append(" / ")
-            .append(relationship.getType().name());
+            .append(relationship.getLabel());
       }
       text.append(" [").append(tableModel.getRowCount()).append("]");
       infoLabel.setText(text.toString());
     } 
   }
 
-  public PropertyContainer getElement() {
+  public Element getElement() {
     return element;
   }
 
-  public void setElement(@Nullable PropertyContainer element) {
+  public void setElement(Element element) {
     if (NeoSwingUtil.equals(this.element, element)) {
       return;
     }
@@ -204,7 +192,7 @@ public class PropertiesPanel extends JPanel {
     }
     this.element = element;
     if (this.element != null) {
-      this.element.getGraphDatabase().registerTransactionEventHandler(updateHandler);
+//      this.element.getGraphDatabase().registerTransactionEventHandler(updateHandler);
     }
     updateComponents();
   }
@@ -216,16 +204,16 @@ public class PropertiesPanel extends JPanel {
       int index = table.getSelectedRow();
       if (index >= 0) {
         Entry entry = tableModel.getEntry(index);
-        EditPropertyAction editAction = new EditPropertyAction(element, entry.key);
+        EditPropertyAction editAction = new EditPropertyAction(element, entry.key, model.getDatabase());
         editAction.setWindow(owner);
         menu.add(new JMenuItem(editAction));
 
-        DeletePropertyAction deleteAction = new DeletePropertyAction(element, entry.key);
+        DeletePropertyAction deleteAction = new DeletePropertyAction(model.getDatabase(), element, entry.key);
         deleteAction.setWindow(owner);
         menu.add(new JMenuItem(deleteAction));
 
         menu.addSeparator();
-        menu.add(new JMenuItem(new SetDefaultLabelAction(element, entry.key)));
+        menu.add(new JMenuItem(new SetDefaultLabelAction(model.getDatabase(), element, entry.key)));
       }
     }
     menu.addSeparator();
@@ -246,8 +234,8 @@ public class PropertiesPanel extends JPanel {
     // just to avoid IllegalStateException. Neo4j will throw if unregistering an
     // unregistered handler, but do nothing if registering the same handler twice
     // so the next line ensures that there is one to unregister with the second
-    this.element.getGraphDatabase().registerTransactionEventHandler(updateHandler);
-    this.element.getGraphDatabase().unregisterTransactionEventHandler(updateHandler);
+//    this.element.getGraphDatabase().registerTransactionEventHandler(updateHandler);
+//    this.element.getGraphDatabase().unregisterTransactionEventHandler(updateHandler);
   }
 
 

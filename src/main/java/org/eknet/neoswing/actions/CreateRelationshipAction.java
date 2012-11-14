@@ -1,36 +1,30 @@
 /*
- * Copyright (c) 2012 Eike Kettner
+ * Copyright 2012 Eike Kettner
  *
- * This file is part of NeoSwing.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * NeoSwing is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
- * NeoSwing is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with NeoSwing.  If not, see <http://www.gnu.org/licenses/>.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 package org.eknet.neoswing.actions;
 
+import com.tinkerpop.blueprints.Direction;
+import com.tinkerpop.blueprints.Edge;
+import com.tinkerpop.blueprints.Vertex;
 import edu.uci.ics.jung.graph.Graph;
+import org.eknet.neoswing.GraphDb;
+import org.eknet.neoswing.GraphModel;
 import org.eknet.neoswing.utils.Dialog;
 import org.eknet.neoswing.utils.NeoSwingUtil;
 import org.eknet.neoswing.view.SelectRelationshipTypePanel;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.neo4j.graphdb.Direction;
-import org.neo4j.graphdb.GraphDatabaseService;
-import org.neo4j.graphdb.Node;
-import org.neo4j.graphdb.Relationship;
-import org.neo4j.graphdb.RelationshipType;
-import org.neo4j.graphdb.Transaction;
 
 import java.awt.event.ActionEvent;
 
@@ -40,52 +34,48 @@ import java.awt.event.ActionEvent;
  */
 public class CreateRelationshipAction extends AbstractSwingAction {
 
-  private final Graph<Node, Relationship> graph;
-  private Node node;
-  private Node other;
+  private Vertex vertex;
+  private Vertex other;
   private Direction direction;
+  private final GraphModel model;
 
-  public CreateRelationshipAction(@NotNull Graph<Node, Relationship> graph, @Nullable Node node, @Nullable Direction direction) {
-    this.node = node;
+  public CreateRelationshipAction(GraphModel model, Vertex Vertex, Direction direction) {
+    this.model = model;
+    this.vertex = Vertex;
     this.direction = direction;
-    this.graph = graph;
-    setNode(node);
+    setVertex(Vertex);
     setDirection(direction);
     updateName();
 
     putValue(SMALL_ICON, NeoSwingUtil.icon("connect"));
-    putValue(SHORT_DESCRIPTION, "Create a new relationship");
+    putValue(SHORT_DESCRIPTION, "Create a new Edge");
 
   }
-  
+
   private void updateName() {
-    if (direction == Direction.INCOMING) {
+    if (direction == Direction.IN) {
       if (this.other == null) {
-        putValue(NAME, "Create Relationship to this");
+        putValue(NAME, "Create Edge to this");
       } else {
-        putValue(NAME, "Create Relationship from picked Node to this");
+        putValue(NAME, "Create Edge from picked Vertex to this");
       }
     }
-    if (direction == Direction.OUTGOING) {
+    if (direction == Direction.OUT) {
       if (this.other == null) {
-        putValue(NAME, "Create Relationship from this");
+        putValue(NAME, "Create Edge from this");
       } else {
-        putValue(NAME, "Create Relationship from this to picked Node");
+        putValue(NAME, "Create Edge from this to picked Vertex");
       }
     }
   }
 
-  public CreateRelationshipAction(Graph<Node, Relationship> graph) {
-    this(graph, null, null);
+  public Vertex getVertex() {
+    return vertex;
   }
 
-  public Node getNode() {
-    return node;
-  }
-
-  public void setNode(Node node) {
-    this.node = node;
-    setEnabled(this.node != null && this.direction != null);
+  public void setVertex(Vertex Vertex) {
+    this.vertex = Vertex;
+    setEnabled(this.vertex != null && this.direction != null);
   }
 
   public Direction getDirection() {
@@ -97,56 +87,59 @@ public class CreateRelationshipAction extends AbstractSwingAction {
       throw new IllegalArgumentException(direction + " not supported");
     }
     this.direction = direction;
-    setEnabled(this.node != null && this.direction != null);
+    setEnabled(this.vertex != null && this.direction != null);
     updateName();
   }
 
-  public Node getOther() {
+  public Vertex getOther() {
     return other;
   }
 
-  public void setOther(Node other) {
+  public void setOther(Vertex other) {
     this.other = other;
     updateName();
   }
 
   @Override
   public void actionPerformed(ActionEvent e) {
-    if (node == null || direction == null) {
+    if (vertex == null || direction == null) {
       return;
     }
-    GraphDatabaseService db = node.getGraphDatabase();
-    Dialog dialog = new Dialog("Relationship Type");
-    SelectRelationshipTypePanel selectPanel = new SelectRelationshipTypePanel(db, NeoSwingUtil.getFactory(true));
+    GraphDb database = model.getDatabase();
+
+    Dialog dialog = new Dialog("Edge Type");
+    SelectRelationshipTypePanel selectPanel = new SelectRelationshipTypePanel(database, NeoSwingUtil.getFactory(true));
     dialog.setContent(selectPanel);
     Dialog.Option option = dialog.show(getWindow(e), java.awt.Dialog.ModalityType.APPLICATION_MODAL);
     if (option != Dialog.Option.OK) {
       return;
     }
-    RelationshipType type = selectPanel.getType();
+    String type = selectPanel.getType();
     if (type == null) {
       return;
     }
-    Transaction tx = db.beginTx();
+
+    GraphDb.Tx tx = database.beginTx();
     try {
       if (other == null) {
-        other = db.createNode();
+        other = database.createNode();
       }
 
-      Relationship relationship0 = null;
-      Relationship relationship1 = null;
-      if (direction == Direction.INCOMING) {
-        relationship0 = other.createRelationshipTo(node, type);
+      Edge Edge0 = null;
+      Edge Edge1 = null;
+      if (direction == Direction.IN) {
+        Edge0 = database.createEdge(other, vertex, type);
       }
-      if (direction == Direction.OUTGOING) {
-        relationship1 = node.createRelationshipTo(other, type);
+      if (direction == Direction.OUT) {
+        Edge1 = database.createEdge(vertex, other, type);
       }
       tx.success();
-      if (relationship0 != null) {
-        NeoSwingUtil.addEdge(graph, relationship0);
+      Graph<Vertex, Edge> graph = model.getGraph();
+      if (Edge0 != null) {
+        NeoSwingUtil.addEdge(graph, Edge0);
       }
-      if (relationship1 != null) {
-        NeoSwingUtil.addEdge(graph, relationship1);
+      if (Edge1 != null) {
+        NeoSwingUtil.addEdge(graph, Edge1);
       }
     } finally {
       tx.finish();

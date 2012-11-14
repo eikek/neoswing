@@ -1,27 +1,23 @@
 /*
- * Copyright (c) 2012 Eike Kettner
+ * Copyright 2012 Eike Kettner
  *
- * This file is part of NeoSwing.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * NeoSwing is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
- * NeoSwing is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with NeoSwing.  If not, see <http://www.gnu.org/licenses/>.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 package org.eknet.neoswing.utils;
 
+import org.eknet.neoswing.GraphDb;
 import org.eknet.neoswing.view.GraphViewer;
-import org.jetbrains.annotations.NotNull;
-import org.neo4j.graphdb.GraphDatabaseService;
 
 import javax.swing.*;
 
@@ -41,7 +37,7 @@ public final class QuickView {
    * 
    * @param db
    */
-  public static void show(@NotNull GraphDatabaseService db) {
+  public static void show(GraphDb db) {
     GraphViewer gv = new GraphViewer(db);
     Dialog dialog = new Dialog(NeoSwingUtil.getApplicationName()
         + " - " + NeoSwingUtil.getApplicationVersion());

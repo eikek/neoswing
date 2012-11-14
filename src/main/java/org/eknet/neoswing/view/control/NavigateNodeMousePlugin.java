@@ -1,41 +1,37 @@
 /*
- * Copyright (c) 2012 Eike Kettner
+ * Copyright 2012 Eike Kettner
  *
- * This file is part of NeoSwing.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * NeoSwing is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
- * NeoSwing is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with NeoSwing.  If not, see <http://www.gnu.org/licenses/>.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 package org.eknet.neoswing.view.control;
 
-import java.awt.event.MouseEvent;
-import java.awt.geom.Point2D;
-
+import com.tinkerpop.blueprints.Direction;
+import com.tinkerpop.blueprints.Edge;
+import com.tinkerpop.blueprints.Vertex;
 import edu.uci.ics.jung.algorithms.layout.FRLayout2;
 import edu.uci.ics.jung.algorithms.layout.Layout;
 import edu.uci.ics.jung.graph.Graph;
 import edu.uci.ics.jung.visualization.Layer;
 import edu.uci.ics.jung.visualization.VisualizationViewer;
 import edu.uci.ics.jung.visualization.control.AnimatedPickingGraphMousePlugin;
-import org.neo4j.graphdb.Direction;
-import org.neo4j.graphdb.Node;
-import org.neo4j.graphdb.Relationship;
-
 import org.eknet.neoswing.GraphModel;
 import org.eknet.neoswing.actions.ExpandNodeAction;
 import org.eknet.neoswing.actions.ResetAction;
 import org.eknet.neoswing.utils.NeoSwingUtil;
+
+import java.awt.event.MouseEvent;
+import java.awt.geom.Point2D;
 
 /**
  * Centers the view around the selected node and shows its neighborhood.
@@ -60,28 +56,28 @@ public class NavigateNodeMousePlugin extends AbstractMousePlugin {
   @Override
   public void mouseClicked(MouseEvent e) {
     if (checkModifiers(e)) {
-      VisualizationViewer<Node, Relationship> viewer = getViewer(e);
+      VisualizationViewer<Vertex, Edge> viewer = getViewer(e);
       assert viewer == graphModel.getViewer();
       down = e.getPoint();
-      Node node = viewer.getPickSupport().getVertex(viewer.getGraphLayout(), down.getX(), down.getY());
+      Vertex node = viewer.getPickSupport().getVertex(viewer.getGraphLayout(), down.getX(), down.getY());
       if (node != null) {
         showNeighborhood(node);
       }
     }
   }
 
-  public void showNeighborhood(final Node node) {
+  public void showNeighborhood(final Vertex node) {
     Runnable animator = new Runnable() {
       public void run() {
         ResetAction resetAction = new ResetAction(graphModel, false);
         NeoSwingUtil.invoke(resetAction, graphModel.getViewer());
 
-        Graph<Node, Relationship> graph = graphModel.getGraph();
+        Graph<Vertex, Edge> graph = graphModel.getGraph();
         graph.addVertex(node);
 
         ExpandNodeAction expandAction = new ExpandNodeAction(node, graphModel, Direction.BOTH);
         NeoSwingUtil.invoke(expandAction, graphModel.getViewer());
-        graphModel.getViewer().setGraphLayout(new FRLayout2<Node, Relationship> (graph));
+        graphModel.getViewer().setGraphLayout(new FRLayout2<Vertex, Edge> (graph));
         centerNode(node);
       }
     };
@@ -94,9 +90,9 @@ public class NavigateNodeMousePlugin extends AbstractMousePlugin {
    *
    * @param vertex
    */
-  public void centerNode(Node vertex) {
-    final VisualizationViewer<Node, Relationship> viewer = graphModel.getViewer();
-    Layout<Node, Relationship> layout = viewer.getGraphLayout();
+  public void centerNode(Vertex vertex) {
+    final VisualizationViewer<Vertex, Edge> viewer = graphModel.getViewer();
+    Layout<Vertex, Edge> layout = viewer.getGraphLayout();
     Point2D q = layout.transform(vertex);
     Point2D lvc = viewer.getRenderContext().getMultiLayerTransformer().inverseTransform(viewer.getCenter());
     final double dx = (lvc.getX() - q.getX()) / 10;

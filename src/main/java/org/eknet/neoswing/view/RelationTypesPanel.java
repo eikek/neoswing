@@ -1,33 +1,28 @@
 /*
- * Copyright (c) 2012 Eike Kettner
+ * Copyright 2012 Eike Kettner
  *
- * This file is part of NeoSwing.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * NeoSwing is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
- * NeoSwing is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with NeoSwing.  If not, see <http://www.gnu.org/licenses/>.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 package org.eknet.neoswing.view;
 
+import com.tinkerpop.blueprints.Direction;
+import com.tinkerpop.blueprints.Edge;
+import com.tinkerpop.blueprints.Vertex;
 import org.eknet.neoswing.ComponentFactory;
+import org.eknet.neoswing.GraphDb;
 import org.eknet.neoswing.GraphModel;
 import org.eknet.neoswing.utils.NeoSwingUtil;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.neo4j.graphdb.Direction;
-import org.neo4j.graphdb.Node;
-import org.neo4j.graphdb.Relationship;
-import org.neo4j.graphdb.RelationshipType;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
@@ -38,7 +33,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Displays the {@link RelationshipType}s of the relationships of a node.
+ * Displays the {@code Label}s of the relationships of a node.
  *
  * @author <a href="mailto:eike.kettner@gmail.com">Eike Kettner</a>
  * @since 11.01.12 14:55
@@ -46,7 +41,7 @@ import java.util.List;
 public class RelationTypesPanel extends JPanel {
 
   private GraphModel model;
-  private Node node;
+  private Vertex node;
 
   private JLabel infoLabel;
 
@@ -57,12 +52,12 @@ public class RelationTypesPanel extends JPanel {
     this(NeoSwingUtil.getFactory(true));
   }
 
-  public RelationTypesPanel(Node node) {
+  public RelationTypesPanel(Vertex node) {
     this(NeoSwingUtil.getFactory(true));
     setNode(node);
   }
 
-  public RelationTypesPanel(@NotNull ComponentFactory factory) {
+  public RelationTypesPanel(ComponentFactory factory) {
     super(new BorderLayout(), true);
     this.factory = factory;
     
@@ -111,7 +106,7 @@ public class RelationTypesPanel extends JPanel {
     return model;
   }
 
-  public void setNode(@Nullable Node node) {
+  public void setNode(Vertex node) {
     if (node != null && this.node != null) {
       if (node.getId() == this.node.getId()) {
         return;
@@ -121,24 +116,24 @@ public class RelationTypesPanel extends JPanel {
     updateComponents();
   }
 
-  public Node getNode() {
+  public Vertex getNode() {
     return node;
   }
 
-  private void setRelationshipsVisible(@NotNull RelationshipType type, @Nullable Direction direction) {
-    Iterable<Relationship> relationships = direction != null
-            ? node.getRelationships(direction, type)
-            : new ArrayList<Relationship>();
-    for (Relationship rt : relationships) {
+  private void setRelationshipsVisible(String type, Direction direction) {
+    Iterable<Edge> relationships = direction != null
+            ? node.getEdges(direction, type)
+            : new ArrayList<Edge>();
+    for (Edge rt : relationships) {
       NeoSwingUtil.addEdge(getModel().getGraph(), rt);
     }
     if (direction != Direction.BOTH) {
       relationships = direction != null
-              ? node.getRelationships(direction.reverse(), type)
-              : node.getRelationships(type);
-      for (Relationship rt : relationships) {
+              ? node.getEdges(direction.opposite(), type)
+              : node.getEdges(Direction.BOTH, type);
+      for (Edge rt : relationships) {
         getModel().getGraph().removeEdge(rt);
-        getModel().getGraph().removeVertex(rt.getOtherNode(node));
+        getModel().getGraph().removeVertex(GraphDb.getOtherNode(rt, node));
       }
     }
     getModel().getViewer().repaint();
@@ -156,8 +151,8 @@ public class RelationTypesPanel extends JPanel {
     
     private void load() {
       if (data.isEmpty() && node != null) {
-        for (Relationship rt : node.getRelationships()) {
-          RelationTypeEntry entry = new RelationTypeEntry(rt.getType());
+        for (Edge rt : node.getEdges(Direction.BOTH)) {
+          RelationTypeEntry entry = new RelationTypeEntry(rt.getLabel());
           if (!data.contains(entry)) {
             data.add(entry);
           }
@@ -216,7 +211,7 @@ public class RelationTypesPanel extends JPanel {
       load();
       RelationTypeEntry e = data.get(rowIndex);
       if (columnIndex == 0) {
-        return e.type.name();
+        return e.type;
       }
       if (columnIndex == 1) {
         return e.visibleIn;
@@ -229,17 +224,17 @@ public class RelationTypesPanel extends JPanel {
   }
   private static class RelationTypeEntry {
     
-    private RelationshipType type;
+    private String type;
     private boolean visibleIn;
     private boolean visibleOut;
 
-    private RelationTypeEntry(RelationshipType type, boolean visibleIn, boolean visibleOut) {
+    private RelationTypeEntry(String type, boolean visibleIn, boolean visibleOut) {
       this.type = type;
       this.visibleIn = visibleIn;
       this.visibleOut = visibleOut;
     }
 
-    private RelationTypeEntry(RelationshipType type) {
+    private RelationTypeEntry(String type) {
       this(type, true, true);
     }
 
@@ -248,10 +243,10 @@ public class RelationTypesPanel extends JPanel {
         return Direction.BOTH;
       }
       if (visibleIn) {
-        return Direction.INCOMING;
+        return Direction.IN;
       }
       if (visibleOut) {
-        return Direction.OUTGOING;
+        return Direction.OUT;
       }
       return null;
     }
@@ -263,14 +258,14 @@ public class RelationTypesPanel extends JPanel {
 
       RelationTypeEntry that = (RelationTypeEntry) o;
 
-      if (type != null ? !type.name().equals(that.type.name()) : that.type != null) return false;
+      if (type != null ? !type.equals(that.type) : that.type != null) return false;
 
       return true;
     }
 
     @Override
     public int hashCode() {
-      return type != null ? type.name().hashCode() : 0;
+      return type != null ? type.hashCode() : 0;
     }
   }
 }
