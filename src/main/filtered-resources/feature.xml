@@ -48,10 +48,20 @@
      </bundle>
   </feature>
 
+  <feature name="blueprints-core" version="${blueprints.version}">
+    <bundle>
+      wrap:mvn:com.tinkerpop.blueprints/blueprints-core/${blueprints.version}$Bundle-Name=Blueprints Core;Bundle-SymbolicName=com.tinkerpop.blueprints.blueprints-core;Export-Package=*;version=${blueprints.version}
+    </bundle>
+    <bundle>
+      wrap:mvn:concurrent/concurrent/${concurrent.version}$Bundle-Name=Concurrent;Bundle-SymbolicName=concurrent.concurrent;Export-Package=*;version=${concurrent.version}&amp;Bundle-Version=${concurrent.version}
+    </bundle>
+  </feature>
+
   <feature name="neoswing" version="${project.version}">
     <feature version="${jung.version}">jung</feature>
     <feature version="${jung.version}">jung-algorithms</feature>
     <feature version="${jung.version}">jung-visualization</feature>
+    <feature version="${blueprints.version}">blueprints-core</feature>
     <bundle>mvn:org.eknet.neoswing/neoswing/${project.version}</bundle>
   </feature>
 

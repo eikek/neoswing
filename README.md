@@ -20,7 +20,7 @@ This results in 3 artifacts being build to the `target` directory. The
 artifact `neoswing-{version}-bin.jar` is an executable jar file that
 can be executed:
 
-    java -jar neoswing-{version}-bin.jar [directory]
+    java -jar neoswing-{version}-bin.jar
 
 Optional, a directory can be specified as argument that is either empty
 or denotes a valid neo4j database directory. If an empty directory is
