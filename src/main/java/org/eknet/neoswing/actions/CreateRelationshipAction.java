@@ -20,13 +20,15 @@ import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.Vertex;
 import edu.uci.ics.jung.graph.Graph;
-import org.eknet.neoswing.GraphDb;
+import org.eknet.neoswing.DbAction;
+import org.eknet.neoswing.ElementId;
 import org.eknet.neoswing.GraphModel;
 import org.eknet.neoswing.utils.Dialog;
 import org.eknet.neoswing.utils.NeoSwingUtil;
 import org.eknet.neoswing.view.SelectRelationshipTypePanel;
 
 import java.awt.event.ActionEvent;
+import java.util.List;
 
 /**
  * @author <a href="mailto:eike.kettner@gmail.com">Eike Kettner</a>
@@ -34,16 +36,16 @@ import java.awt.event.ActionEvent;
  */
 public class CreateRelationshipAction extends AbstractSwingAction {
 
-  private Vertex vertex;
-  private Vertex other;
+  private ElementId<Vertex> vertex;
+  private ElementId<Vertex> other;
   private Direction direction;
   private final GraphModel model;
 
-  public CreateRelationshipAction(GraphModel model, Vertex Vertex, Direction direction) {
+  public CreateRelationshipAction(GraphModel model, ElementId<Vertex> vertex, Direction direction) {
     this.model = model;
-    this.vertex = Vertex;
+    this.vertex = vertex;
     this.direction = direction;
-    setVertex(Vertex);
+    setVertex(vertex);
     setDirection(direction);
     updateName();
 
@@ -69,11 +71,7 @@ public class CreateRelationshipAction extends AbstractSwingAction {
     }
   }
 
-  public Vertex getVertex() {
-    return vertex;
-  }
-
-  public void setVertex(Vertex Vertex) {
+  public void setVertex(ElementId<Vertex> Vertex) {
     this.vertex = Vertex;
     setEnabled(this.vertex != null && this.direction != null);
   }
@@ -91,11 +89,7 @@ public class CreateRelationshipAction extends AbstractSwingAction {
     updateName();
   }
 
-  public Vertex getOther() {
-    return other;
-  }
-
-  public void setOther(Vertex other) {
+  public void setOther(ElementId<Vertex> other) {
     this.other = other;
     updateName();
   }
@@ -105,46 +99,51 @@ public class CreateRelationshipAction extends AbstractSwingAction {
     if (vertex == null || direction == null) {
       return;
     }
-    GraphDb database = model.getDatabase();
-
     Dialog dialog = new Dialog("Edge Type");
-    SelectRelationshipTypePanel selectPanel = new SelectRelationshipTypePanel(database, NeoSwingUtil.getFactory(true));
+    SelectRelationshipTypePanel selectPanel = new SelectRelationshipTypePanel(model, NeoSwingUtil.getFactory(true));
     dialog.setContent(selectPanel);
     Dialog.Option option = dialog.show(getWindow(e), java.awt.Dialog.ModalityType.APPLICATION_MODAL);
     if (option != Dialog.Option.OK) {
       return;
     }
-    String type = selectPanel.getType();
+    final String type = selectPanel.getType();
     if (type == null) {
       return;
     }
-
-    GraphDb.Tx tx = database.beginTx();
-    try {
-      if (other == null) {
-        other = database.createNode();
+    model.execute(new DbAction<Object, Edge>() {
+      @Override
+      protected Object doInTx(GraphModel model) {
+        Vertex v = model.getDatabase().lookup(vertex);
+        Vertex o;
+        if (other == null) {
+          o = model.getDatabase().createNode();
+        } else {
+          o = model.getDatabase().lookup(other);
+        }
+        Edge edge0 = null;
+        Edge edge1 = null;
+        if (direction == Direction.IN) {
+          edge0 = model.getDatabase().createEdge(o, v, type);
+        }
+        if (direction == Direction.OUT) {
+          edge1 = model.getDatabase().createEdge(v, o, type);
+        }
+        Graph<Vertex, Edge> graph = model.getGraph();
+        if (edge0 != null) {
+          publish(edge0);
+        }
+        if (edge1 != null) {
+          publish(edge1);
+        }
+        return null;
       }
 
-      Edge Edge0 = null;
-      Edge Edge1 = null;
-      if (direction == Direction.IN) {
-        Edge0 = database.createEdge(other, vertex, type);
+      @Override
+      protected void process(List<Edge> chunks) {
+        for (Edge e : chunks) {
+          NeoSwingUtil.addEdge(getModel().getGraph(), e);
+        }
       }
-      if (direction == Direction.OUT) {
-        Edge1 = database.createEdge(vertex, other, type);
-      }
-      tx.success();
-      Graph<Vertex, Edge> graph = model.getGraph();
-      if (Edge0 != null) {
-        NeoSwingUtil.addEdge(graph, Edge0);
-      }
-      if (Edge1 != null) {
-        NeoSwingUtil.addEdge(graph, Edge1);
-      }
-    } finally {
-      tx.finish();
-    }
-
-
+    });
   }
 }

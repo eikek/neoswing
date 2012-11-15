@@ -25,6 +25,7 @@ import edu.uci.ics.jung.graph.Graph;
 import edu.uci.ics.jung.visualization.Layer;
 import edu.uci.ics.jung.visualization.VisualizationViewer;
 import edu.uci.ics.jung.visualization.control.AnimatedPickingGraphMousePlugin;
+import org.eknet.neoswing.ElementId;
 import org.eknet.neoswing.GraphModel;
 import org.eknet.neoswing.actions.ExpandNodeAction;
 import org.eknet.neoswing.actions.ResetAction;
@@ -75,7 +76,7 @@ public class NavigateNodeMousePlugin extends AbstractMousePlugin {
         Graph<Vertex, Edge> graph = graphModel.getGraph();
         graph.addVertex(node);
 
-        ExpandNodeAction expandAction = new ExpandNodeAction(node, graphModel, Direction.BOTH);
+        ExpandNodeAction expandAction = new ExpandNodeAction(ElementId.vertexId(node), graphModel, Direction.BOTH);
         NeoSwingUtil.invoke(expandAction, graphModel.getViewer());
         graphModel.getViewer().setGraphLayout(new FRLayout2<Vertex, Edge> (graph));
         centerNode(node);

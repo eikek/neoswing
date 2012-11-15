@@ -16,8 +16,8 @@
 
 package org.eknet.neoswing.actions;
 
-import com.tinkerpop.blueprints.Element;
-import org.eknet.neoswing.GraphDb;
+import org.eknet.neoswing.ElementId;
+import org.eknet.neoswing.GraphModel;
 import org.eknet.neoswing.utils.Dialog;
 import org.eknet.neoswing.utils.NeoSwingUtil;
 import org.eknet.neoswing.view.PropertyEditor;
@@ -32,8 +32,8 @@ import static java.awt.Dialog.ModalityType.APPLICATION_MODAL;
  */
 public class EditPropertyAction extends AbstractSwingAction {
 
-  private final GraphDb db;
-  private Element element;
+  private final GraphModel model;
+  private ElementId<?> element;
   private String key;
 
   /**
@@ -42,10 +42,10 @@ public class EditPropertyAction extends AbstractSwingAction {
    *
    * @param element
    * @param key
-   * @param db
+   * @param model
    */
-  public EditPropertyAction(Element element, String key, GraphDb db) {
-    this.db = db;
+  public EditPropertyAction(ElementId<?> element, String key, GraphModel model) {
+    this.model = model;
     setElement(element);
     setKey(key);
 
@@ -65,21 +65,17 @@ public class EditPropertyAction extends AbstractSwingAction {
    * specified element.
    *
    * @param element
-   * @param db
+   * @param model
    */
-  public EditPropertyAction(Element element, GraphDb db) {
-    this(element, null, db);
+  public EditPropertyAction(ElementId<?> element, GraphModel model) {
+    this(element, null, model);
   }
   
-  public EditPropertyAction(GraphDb db) {
-    this(null, null, db);
+  public EditPropertyAction(GraphModel model) {
+    this(null, null, model);
   }
 
-  public Element getElement() {
-    return element;
-  }
-
-  public void setElement(Element element) {
+  public void setElement(ElementId<?> element) {
     this.element = element;
     setEnabled(element != null);
   }
@@ -94,7 +90,7 @@ public class EditPropertyAction extends AbstractSwingAction {
 
   @Override
   public void actionPerformed(ActionEvent e) {
-    Dialog dialog = PropertyEditor.inDialog(db, element, key);
+    Dialog dialog = PropertyEditor.inDialog(model, element, key);
     dialog.show(getWindow(e), APPLICATION_MODAL);
   }
 }

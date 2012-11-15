@@ -21,6 +21,7 @@ import com.tinkerpop.blueprints.Vertex;
 import edu.uci.ics.jung.graph.DirectedSparseMultigraph;
 import edu.uci.ics.jung.graph.Graph;
 import edu.uci.ics.jung.visualization.VisualizationViewer;
+import org.eknet.neoswing.DbAction;
 import org.eknet.neoswing.GraphDb;
 import org.eknet.neoswing.GraphModel;
 import org.eknet.neoswing.VisualizationViewFactory;
@@ -72,5 +73,11 @@ public class SimpleGraphModel implements GraphModel {
 
   public void setGraph(Graph<Vertex, Edge> graph) {
     this.graph = graph;
+  }
+
+  @Override
+  public <A, B> void execute(DbAction<A, B> action) {
+    action.setModel(this);
+    action.execute();
   }
 }

@@ -17,12 +17,13 @@
 package org.eknet.neoswing.view;
 
 import com.tinkerpop.blueprints.Edge;
-import com.tinkerpop.blueprints.Element;
 import com.tinkerpop.blueprints.Vertex;
 import edu.uci.ics.jung.graph.Graph;
 import edu.uci.ics.jung.visualization.VisualizationViewer;
 import edu.uci.ics.jung.visualization.control.DefaultModalGraphMouse;
 import org.eknet.neoswing.ComponentFactory;
+import org.eknet.neoswing.DbAction;
+import org.eknet.neoswing.ElementId;
 import org.eknet.neoswing.GraphDb;
 import org.eknet.neoswing.GraphModel;
 import org.eknet.neoswing.NeoSwing;
@@ -30,8 +31,11 @@ import org.eknet.neoswing.utils.NeoSwingUtil;
 import org.eknet.neoswing.utils.WindowUtil;
 import org.eknet.neoswing.view.control.SelectElementMousePlugin;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JSplitPane;
+import java.awt.BorderLayout;
+import java.awt.Dimension;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -56,15 +60,15 @@ public class GraphViewer extends JPanel implements GraphModel {
   private final PropertyChangeListener panelUpdateListener = new PropertyChangeListener() {
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
-      if (evt.getPropertyName().equals(SelectElementMousePlugin.PROPERTY_NODE)) {
-        Vertex node = (Vertex) evt.getNewValue();
-        relationTypesPanel.setNode(node);
-        propertiesPanel.setElement(node);
-      }
-      if (evt.getPropertyName().equals(SelectElementMousePlugin.PROPERTY_RELATIONSHIP)) {
-        Element el = (Element) evt.getNewValue();
-        propertiesPanel.setElement(el);
-        relationTypesPanel.setNode(null);
+      if (evt.getPropertyName().equals(SelectElementMousePlugin.PROPERTY_ELEMENT)) {
+        ElementId<?> selected = (ElementId<?>) evt.getNewValue();
+        if (selected.isVertex()) {
+          //noinspection unchecked
+          relationTypesPanel.setNodeId((ElementId<Vertex>) selected);
+        } else {
+          relationTypesPanel.setNodeId(null);
+        }
+        propertiesPanel.setElement(selected);
       }
     }
   };
@@ -96,7 +100,7 @@ public class GraphViewer extends JPanel implements GraphModel {
     propertiesPanel = new PropertiesPanel(graphPanel, componentFactory, null);
     vsplit.setLeftComponent(new JScrollPane(propertiesPanel));
     propertiesPanel.setPreferredSize(new Dimension(200, 50));
-    relationTypesPanel = new RelationTypesPanel(componentFactory);
+    relationTypesPanel = new RelationTypesPanel(graphPanel, componentFactory);
     vsplit.setRightComponent(new JScrollPane(relationTypesPanel));
     relationTypesPanel.setPreferredSize(new Dimension(200, 50));
     vsplit.setOneTouchExpandable(true);
@@ -138,5 +142,10 @@ public class GraphViewer extends JPanel implements GraphModel {
   @Override
   public GraphDb getDatabase() {
     return graphPanel.getDatabase();
+  }
+
+  @Override
+  public <A, B> void execute(DbAction<A, B> action) {
+    graphPanel.execute(action);
   }
 }

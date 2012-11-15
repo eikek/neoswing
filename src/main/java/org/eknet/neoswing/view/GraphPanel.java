@@ -107,7 +107,7 @@ public class GraphPanel extends JPanel implements GraphModel {
 
     // search index
     JButton findButton = factory.createToolbarButton();
-    findButton.setAction(new SearchAction(getDatabase(), getGraph()));
+    findButton.setAction(new SearchAction(graphModel));
     bar.add(findButton);
     return bar;
   }
@@ -127,4 +127,8 @@ public class GraphPanel extends JPanel implements GraphModel {
     return graphModel.getDatabase();
   }
 
+  @Override
+  public <A, B> void execute(DbAction<A, B> action) {
+    graphModel.execute(action);
+  }
 }

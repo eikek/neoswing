@@ -16,10 +16,13 @@
 
 package org.eknet.neoswing;
 
-import com.tinkerpop.blueprints.*;
-import org.eknet.neoswing.utils.EmptyIndex;
+import com.tinkerpop.blueprints.Direction;
+import com.tinkerpop.blueprints.Edge;
+import com.tinkerpop.blueprints.Element;
+import com.tinkerpop.blueprints.Graph;
+import com.tinkerpop.blueprints.TransactionalGraph;
+import com.tinkerpop.blueprints.Vertex;
 
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -44,10 +47,6 @@ public class GraphDb {
     db.shutdown();
   }
 
-  public String[] nodeIndexNames() {
-    return indexNames(Vertex.class);
-  }
-
   public Iterable<Vertex> getVertices(String key, Object value) {
     return db.getVertices(key, value);
   }
@@ -64,47 +63,30 @@ public class GraphDb {
     return db.getEdges();
   }
 
-  public Index<Vertex> getNodeIndex(final String name) {
-    if (db instanceof IndexableGraph) {
-      IndexableGraph indexableGraph = (IndexableGraph) db;
-      return indexableGraph.getIndex(name, Vertex.class);
-    } else {
-      return new EmptyIndex<Vertex>(name, Vertex.class);
-    }
-  }
-
-  public Index<Edge> getEdgeIndex(String name) {
-    if (db instanceof IndexableGraph) {
-      IndexableGraph indexableGraph = (IndexableGraph) db;
-      return indexableGraph.getIndex(name, Edge.class);
-    } else {
-      return new EmptyIndex<Edge>(name, Edge.class);
-    }
-  }
-  public String[] indexNames(Class<? extends Element> type) {
-    ArrayList<String> names = new ArrayList<String>();
-    if (db instanceof IndexableGraph) {
-      IndexableGraph indexableGraph = (IndexableGraph) db;
-      for (Index<? extends Element> idx : indexableGraph.getIndices()) {
-        if (idx.getIndexClass() == type) {
-          names.add(idx.getIndexName());
-        }
-      }
-    }
-    return names.toArray(new String[names.size()]);
-  }
-
-  public String[] relationshipIndexNames() {
-    return indexNames(Edge.class);
-  }
-
-  public Iterable<String> getRelationshipTypes() {
+  public Set<String> getRelationshipTypes() {
     //hardcore find impl
     Set<String> set = new HashSet<String>();
     for (Edge e : db.getEdges()) {
       set.add(e.getLabel());
     }
     return set;
+  }
+
+  @SuppressWarnings("unchecked")
+  public <T extends Element> T lookup(ElementId<T> id) {
+    if (id.isVertex()) {
+      return (T) db.getVertex(id.getId());
+    } else {
+      return (T) db.getEdge(id.getId());
+    }
+  }
+
+  public Vertex lookupVertex(Object id) {
+    return db.getVertex(id);
+  }
+
+  public Edge lookupEdge(Object id) {
+    return db.getEdge(id);
   }
 
   public Vertex createNode() {

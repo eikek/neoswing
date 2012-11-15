@@ -18,14 +18,16 @@ package org.eknet.neoswing.actions;
 
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Edge;
+import com.tinkerpop.blueprints.Element;
 import com.tinkerpop.blueprints.Vertex;
-import edu.uci.ics.jung.graph.Graph;
-import edu.uci.ics.jung.visualization.VisualizationViewer;
+import org.eknet.neoswing.DbAction;
+import org.eknet.neoswing.ElementId;
 import org.eknet.neoswing.GraphDb;
 import org.eknet.neoswing.GraphModel;
 import org.eknet.neoswing.utils.NeoSwingUtil;
 
 import java.awt.event.ActionEvent;
+import java.util.List;
 
 /**
  * @author <a href="mailto:eike.kettner@gmail.com">Eike Kettner</a>
@@ -33,28 +35,51 @@ import java.awt.event.ActionEvent;
  */
 public class CollapseNodeAction extends AbstractSwingAction {
 
-  private final VisualizationViewer<Vertex, Edge> viewer;
-  private final Graph<Vertex, Edge> graph;
-  private final Vertex node;
+  private final GraphModel model;
+  private final ElementId<Vertex> node;
   private final Direction direction;
   
-  public CollapseNodeAction(Vertex node, GraphModel graphModel, Direction direction) {
-    this.viewer = graphModel.getViewer();
-    this.graph = graphModel.getGraph();
+  public CollapseNodeAction(ElementId<Vertex> node, GraphModel graphModel, Direction direction) {
+    this.model = graphModel;
     this.node = node;
     this.direction = direction;
-    
+
     putValue(NAME, "Collapse " + direction);
     putValue(SMALL_ICON, NeoSwingUtil.icon("arrow_in"));
   }
   
   @Override
   public void actionPerformed(ActionEvent e) {
-    for (Edge relationship : node.getEdges(direction)) {
-      Vertex other = GraphDb.getOtherNode(relationship, node);
-      graph.removeEdge(relationship);
-      graph.removeVertex(other);
-    }
-    viewer.repaint();
+    model.execute(new DbAction<Object, Element>() {
+      @Override
+      protected Object doInTx(GraphModel model) {
+        Vertex v = model.getDatabase().lookup(node);
+        for (Edge relationship : v.getEdges(direction)) {
+          Vertex other = GraphDb.getOtherNode(relationship, v);
+          publish(relationship);
+          publish(other);
+        }
+        return null;
+      }
+
+      @Override
+      protected void process(List<Element> chunks) {
+        for (Element el : chunks) {
+          if (el instanceof Vertex) {
+            Vertex vertex = (Vertex) el;
+            getModel().getGraph().removeVertex(vertex);
+          }
+          if (el instanceof Edge) {
+            Edge edge = (Edge) el;
+            getModel().getGraph().removeEdge(edge);
+          }
+        }
+      }
+
+      @Override
+      protected void done() {
+        getModel().getViewer().repaint();
+      }
+    });
   }
 }

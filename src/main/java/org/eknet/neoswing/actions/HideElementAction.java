@@ -19,9 +19,12 @@ package org.eknet.neoswing.actions;
 import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.Element;
 import com.tinkerpop.blueprints.Vertex;
+import org.eknet.neoswing.DbAction;
+import org.eknet.neoswing.ElementId;
 import org.eknet.neoswing.GraphModel;
 
 import java.awt.event.ActionEvent;
+import java.util.List;
 
 /**
  * @author <a href="mailto:eike.kettner@gmail.com">Eike Kettner</a>
@@ -29,10 +32,10 @@ import java.awt.event.ActionEvent;
  */
 public class HideElementAction extends AbstractSwingAction {
 
-  private final Element element;
+  private final ElementId<?> element;
   private final GraphModel graphModel;
   
-  public HideElementAction(GraphModel graphModel, Element element) {
+  public HideElementAction(GraphModel graphModel, ElementId<?> element) {
     this.element = element;
     this.graphModel = graphModel;
     
@@ -41,11 +44,26 @@ public class HideElementAction extends AbstractSwingAction {
 
   @Override
   public void actionPerformed(ActionEvent e) {
-    if (element instanceof Vertex) {
-      graphModel.getGraph().removeVertex((Vertex) element);
-    }
-    if (element instanceof Edge) {
-      graphModel.getGraph().removeEdge((Edge) element);
-    }
+    graphModel.execute(new DbAction<Object, Element>() {
+      @Override
+      protected Object doInTx(GraphModel model) {
+        Element el = model.getDatabase().lookup(element);
+        publish(el);
+        return null;
+      }
+
+      @Override
+      protected void process(List<Element> chunks) {
+        for (Element el : chunks) {
+          if (element.isVertex()) {
+            graphModel.getGraph().removeVertex((Vertex) el);
+          }
+          if (element.isEdge()) {
+            graphModel.getGraph().removeEdge((Edge) el);
+          }
+        }
+      }
+    });
+
   }
 }

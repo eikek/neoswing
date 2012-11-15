@@ -14,27 +14,25 @@
  * limitations under the License.
  */
 
-package org.eknet.neoswing;
+package org.eknet.neoswing.utils;
 
-import com.tinkerpop.blueprints.Edge;
-import com.tinkerpop.blueprints.Vertex;
-import edu.uci.ics.jung.graph.Graph;
-import edu.uci.ics.jung.visualization.VisualizationViewer;
+import javax.swing.*;
+import java.util.concurrent.Executor;
 
 /**
- * Implemented by the root component that displays the graph. Children components
- * can travel up the hierarchy to access the graph and database.
- *
  * @author <a href="mailto:eike.kettner@gmail.com">Eike Kettner</a>
- * @since 10.01.12 19:24
+ * @since 15.11.12 18:41
  */
-public interface GraphModel {
+public class EdtExecutor implements Executor {
 
-  Graph<Vertex, Edge> getGraph();
+  public static final Executor instance = new EdtExecutor();
 
-  VisualizationViewer<Vertex, Edge> getViewer();
-
-  GraphDb getDatabase();
-
-  <A, B> void execute(DbAction<A, B> action);
+  @Override
+  public void execute(Runnable command) {
+    if (SwingUtilities.isEventDispatchThread()) {
+      command.run();
+    } else {
+      SwingUtilities.invokeLater(command);
+    }
+  }
 }

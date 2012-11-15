@@ -17,7 +17,7 @@
 package org.eknet.neoswing.actions;
 
 import com.tinkerpop.blueprints.Vertex;
-import org.eknet.neoswing.GraphDb;
+import org.eknet.neoswing.DbAction;
 import org.eknet.neoswing.GraphModel;
 import org.eknet.neoswing.utils.NeoSwingUtil;
 
@@ -41,15 +41,18 @@ public class AddNodeAction extends AbstractSwingAction {
 
   @Override
   public void actionPerformed(ActionEvent e) {
-    GraphDb db = graphModel.getDatabase();
-    GraphDb.Tx tx = db.beginTx();
-    try {
-      Vertex node = db.createNode();
-      tx.success();
-      graphModel.getGraph().addVertex(node);
-      graphModel.getViewer().repaint();
-    } finally {
-      tx.finish();
-    }
+    graphModel.execute(new DbAction<Object, Object>() {
+      @Override
+      protected Object doInTx(GraphModel model) {
+        Vertex node = model.getDatabase().createNode();
+        graphModel.getGraph().addVertex(node);
+        return null;
+      }
+
+      @Override
+      protected void done() {
+        getModel().getViewer().repaint();
+      }
+    });
   }
 }

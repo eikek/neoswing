@@ -17,12 +17,12 @@
 package org.eknet.neoswing.view;
 
 import org.eknet.neoswing.ComponentFactory;
-import org.eknet.neoswing.GraphDb;
+import org.eknet.neoswing.DbAction;
+import org.eknet.neoswing.GraphModel;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Set;
 
 /**
  * @author <a href="mailto:eike.kettner@gmail.com">Eike Kettner</a>
@@ -32,7 +32,7 @@ public class SelectRelationshipTypePanel extends JPanel {
 
   private JComboBox typeCombo;
 
-  public SelectRelationshipTypePanel(GraphDb db, ComponentFactory factory) {
+  public SelectRelationshipTypePanel(GraphModel model, final ComponentFactory factory) {
     BoxLayout boxl = new BoxLayout(this, BoxLayout.Y_AXIS);
     setLayout(boxl);
 
@@ -41,17 +41,25 @@ public class SelectRelationshipTypePanel extends JPanel {
     add(top);
     top.add(new JLabel("Please choose or enter relationship type"));
 
-    JPanel input = factory.createPanel();
+    final JPanel input = factory.createPanel();
     input.setLayout(new FlowLayout(FlowLayout.CENTER));
     add(input);
 
-    Iterable<String> types = db.getRelationshipTypes();
-    List<String> items = new ArrayList<String>();
-    for (String type : types) {
-      items.add(type);
-    }
-    typeCombo = factory.createComboBox(items.toArray(new String[items.size()]), true, true);
-    input.add(typeCombo);
+    model.execute(new DbAction<Set<String>, Void>() {
+      @Override
+      protected Set<String> doInTx(GraphModel model) {
+        return model.getDatabase().getRelationshipTypes();
+      }
+
+      @Override
+      protected void done() {
+        Set<String> strings = safeGet();
+        if (strings != null) {
+          typeCombo = factory.createComboBox(strings.toArray(new String[strings.size()]), true, true);
+          input.add(typeCombo);
+        }
+      }
+    });
   }
   
   public String getType() {

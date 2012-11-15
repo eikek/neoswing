@@ -19,6 +19,7 @@ package org.eknet.neoswing.view.control;
 import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.Vertex;
 import edu.uci.ics.jung.visualization.VisualizationViewer;
+import org.eknet.neoswing.ElementId;
 
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeListener;
@@ -30,14 +31,11 @@ import java.beans.PropertyChangeSupport;
  */
 public class SelectElementMousePlugin extends AbstractMousePlugin {
 
-  public static final String PROPERTY_NODE = "selectedNode";
-  public static final String PROPERTY_RELATIONSHIP = "selectedRelationship";
-  public static final String PROPERTY_CONTAINER = "selectedPropertyContainer";
+  public static final String PROPERTY_ELEMENT = "selectedElement";
 
   private final PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);
-  private Vertex node;
-  private Edge relationship;
-  
+  private ElementId<?> selected;
+
   public SelectElementMousePlugin(int button) {
     super(button);
   }
@@ -62,17 +60,13 @@ public class SelectElementMousePlugin extends AbstractMousePlugin {
       down = e.getPoint();
       Vertex node = viewer.getPickSupport().getVertex(viewer.getGraphLayout(), down.getX(), down.getY());
       if (node != null) {
-        propertyChangeSupport.firePropertyChange(PROPERTY_NODE, this.node, node);
-        propertyChangeSupport.firePropertyChange(PROPERTY_CONTAINER, this.node, node);
-        this.node = node;
-        this.relationship = null;
+        propertyChangeSupport.firePropertyChange(PROPERTY_ELEMENT, this.selected, ElementId.vertexId(node));
+        this.selected = ElementId.vertexId(node);
       }
       Edge relationship = viewer.getPickSupport().getEdge(viewer.getGraphLayout(), down.getX(), down.getY());
       if (relationship != null) {
-        propertyChangeSupport.firePropertyChange(PROPERTY_RELATIONSHIP, this.relationship, relationship);
-        propertyChangeSupport.firePropertyChange(PROPERTY_CONTAINER, this.relationship, relationship);
-        this.relationship = relationship;
-        this.node = null;
+        propertyChangeSupport.firePropertyChange(PROPERTY_ELEMENT, this.selected, ElementId.edgeId(relationship));
+        this.selected = ElementId.edgeId(relationship);
       }
     }
   }

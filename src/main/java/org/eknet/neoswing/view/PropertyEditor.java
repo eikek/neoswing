@@ -20,19 +20,31 @@ import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.Element;
 import com.tinkerpop.blueprints.Vertex;
 import org.eknet.neoswing.ComponentFactory;
-import org.eknet.neoswing.GraphDb;
+import org.eknet.neoswing.DbAction;
+import org.eknet.neoswing.ElementId;
+import org.eknet.neoswing.GraphModel;
 import org.eknet.neoswing.utils.Dialog;
+import org.eknet.neoswing.utils.EdtExecutor;
 import org.eknet.neoswing.utils.NeoSwingUtil;
 
-import javax.swing.*;
+import javax.swing.BorderFactory;
+import javax.swing.JComboBox;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
 import javax.swing.border.Border;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * A panel that allows to edit or add a property of a {@link Element}.
@@ -54,9 +66,9 @@ public class PropertyEditor extends JPanel {
   public static final String PROPERTY_VALUE = "propertyValue";
 
   private final ComponentFactory componentFactory;
-  private final GraphDb database;
+  private final GraphModel model;
 
-  private Element element;
+  private ElementId<?> element;
 
   private Border normalBorder;
   private Border errorBorder = BorderFactory.createLineBorder(Color.RED);
@@ -92,23 +104,23 @@ public class PropertyEditor extends JPanel {
   };
 
   
-  public PropertyEditor(GraphDb database, Element element, String key, ComponentFactory factory) {
+  public PropertyEditor(GraphModel model, ElementId<?> element, String key, ComponentFactory factory) {
     this.componentFactory = factory;
-    this.database = database;
+    this.model = model;
     initComponents(key);
     setPropertyContainer(element, key);
   }
 
-  public PropertyEditor(GraphDb database, Element element, String key) {
-    this(database, element, key, NeoSwingUtil.getFactory(true));
+  public PropertyEditor(GraphModel model, ElementId<?> element, String key) {
+    this(model, element, key, NeoSwingUtil.getFactory(true));
   }
 
-  public PropertyEditor(GraphDb database, ComponentFactory factory) {
-    this(database, null, null, factory);
+  public PropertyEditor(GraphModel model, ComponentFactory factory) {
+    this(model, null, null, factory);
   }
 
-  public PropertyEditor(GraphDb database) {
-    this(database, null, null, NeoSwingUtil.getFactory(true));
+  public PropertyEditor(GraphModel model) {
+    this(model, null, null, NeoSwingUtil.getFactory(true));
   }
 
   /**
@@ -118,7 +130,7 @@ public class PropertyEditor extends JPanel {
    * @param key
    * @return
    */
-  public static Dialog inDialog(GraphDb db, Element element, String key) {
+  public static Dialog inDialog(GraphModel db, ElementId<?> element, String key) {
     final Dialog dialog = new Dialog("Edit Property");
     final PropertyEditor editor = new PropertyEditor(db, element, key);
     editor.addPropertyChangeListener(new PropertyChangeListener() {
@@ -141,12 +153,12 @@ public class PropertyEditor extends JPanel {
     return dialog;
   }
 
-  public void setPropertyContainer(Element container, final String key) {
-    this.element = container;
-    SwingUtilities.invokeLater(new Runnable() {
+  public void setPropertyContainer(ElementId<?> elementId, final String key) {
+    this.element = elementId;
+    updateComponents(key);
+    EdtExecutor.instance.execute(new Runnable() {
       @Override
       public void run() {
-        updateComponents(key);
         validateKey();
         validateValue();
       }
@@ -173,27 +185,35 @@ public class PropertyEditor extends JPanel {
     if (this.element == null) {
       throw new IllegalStateException("No property container set");
     }
-    GraphDb.Tx tx = database.beginTx();
-    try {
-      String key = getKey();
-      if (key == null) {
-        throw new IllegalStateException("Key is required");
+    model.execute(new DbAction<List<Object>, Object>() {
+      @Override
+      protected List<Object> doInTx(GraphModel model) {
+        String key = getKey();
+        if (key == null) {
+          throw new IllegalStateException("Key is required");
+        }
+        Element el = model.getDatabase().lookup(element);
+        Object old = null;
+        if (el.getProperty(key) != null) {
+          old = el.getProperty(key);
+        }
+        final Object value = readValue();
+        if (value == null) {
+          el.removeProperty(key);
+        } else {
+          el.setProperty(key, value);
+        }
+        return Arrays.asList(old, value);
       }
-      Object old = null;
-      if (element.getProperty(key) != null) {
-        old = element.getProperty(key);
+
+      @Override
+      protected void done() {
+        List<Object> list = safeGet();
+        if (list != null) {
+          firePropertyChange(PROPERTY_VALUE, list.get(0), list.get(1));
+        }
       }
-      Object value = readValue();
-      if (value == null) {
-        element.removeProperty(key);
-      } else {
-        element.setProperty(key, value);
-      }
-      tx.success();
-      firePropertyChange(PROPERTY_VALUE, old, value);
-    } finally {
-      tx.finish();
-    }
+    });
   }
 
   protected void validateForm() {
@@ -345,24 +365,50 @@ public class PropertyEditor extends JPanel {
     updateComponents(key);
   }
   
-  private void updateComponents(String key) {
+  private void updateComponents(final String key) {
     keyValue.setText(key);
     keyValue.setEnabled(key == null);
     if (element == null) {
       infoLabel.setText(null);
       valueField.setText(null);
     } else {
-      infoLabel.setText(element instanceof Vertex ?
-          "Edit Property of Node " + NeoSwingUtil.getId(element) :
-          "Edit Property of Relationship " + NeoSwingUtil.getId(element) + " / " + ((Edge) element).getLabel());
-      if (key != null) {
-        if (element.getProperty(key) != null) {
-          Object value = element.getProperty(key);
-          valueField.setText(value.toString());
-          PropertyType pt = PropertyType.forClass(value.getClass());
-          typeSelector.setSelectedItem(pt);
+      model.execute(new DbAction<Object, Runnable>() {
+        @Override
+        protected Object doInTx(GraphModel model) {
+          Element el = model.getDatabase().lookup(element);
+          final String text = el instanceof Vertex ?
+              "Edit Property of Node " + NeoSwingUtil.getId(el) :
+              "Edit Property of Relationship " + NeoSwingUtil.getId(el) + " / " + ((Edge) el).getLabel();
+          publish(new Runnable() {
+            @Override
+            public void run() {
+              infoLabel.setText(text);
+            }
+          });
+
+          if (key != null) {
+            if (el.getProperty(key) != null) {
+              final Object value = el.getProperty(key);
+              final PropertyType pt = PropertyType.forClass(value.getClass());
+              publish(new Runnable() {
+                @Override
+                public void run() {
+                  valueField.setText(value.toString());
+                  typeSelector.setSelectedItem(pt);
+                }
+              });
+            }
+          }
+          return null;
         }
-      }
+
+        @Override
+        protected void process(List<Runnable> chunks) {
+          for (Runnable r : chunks) {
+            r.run();
+          }
+        }
+      });
     }
   }
   

@@ -19,12 +19,13 @@ package org.eknet.neoswing.actions;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.Vertex;
-import edu.uci.ics.jung.graph.Graph;
-import edu.uci.ics.jung.visualization.VisualizationViewer;
+import org.eknet.neoswing.DbAction;
+import org.eknet.neoswing.ElementId;
 import org.eknet.neoswing.GraphModel;
 import org.eknet.neoswing.utils.NeoSwingUtil;
 
 import java.awt.event.ActionEvent;
+import java.util.List;
 
 import static org.eknet.neoswing.utils.NeoSwingUtil.addEdge;
 
@@ -34,16 +35,14 @@ import static org.eknet.neoswing.utils.NeoSwingUtil.addEdge;
  */
 public class ExpandNodeAction extends AbstractSwingAction {
 
-  private final Vertex node;
-  private final VisualizationViewer<Vertex, Edge> viewer;
-  private final Graph<Vertex, Edge> graph;
+  private final ElementId<Vertex> node;
+  private final GraphModel model;
   private final Direction direction;
 
-  public ExpandNodeAction(Vertex node, GraphModel graphModel, Direction direction) {
+  public ExpandNodeAction(ElementId<Vertex> node, GraphModel graphModel, Direction direction) {
     this.node = node;
     this.direction = direction;
-    this.viewer = graphModel.getViewer();
-    this.graph = graphModel.getGraph();
+    this.model = graphModel;
 
     putValue(NAME, "Expand " + direction.name());
     putValue(SMALL_ICON, NeoSwingUtil.icon("arrow_out"));
@@ -51,9 +50,28 @@ public class ExpandNodeAction extends AbstractSwingAction {
 
   @Override
   public void actionPerformed(ActionEvent e) {
-    for (Edge relationship : node.getEdges(direction)) {
-      addEdge(graph, relationship);
-    }
-    viewer.repaint();
+    model.execute(new DbAction<Object, Edge>() {
+      @Override
+      protected Object doInTx(GraphModel model) {
+        Vertex v = model.getDatabase().lookup(node);
+        for (Edge relationship : v.getEdges(direction)) {
+          publish(relationship);
+        }
+        return null;
+      }
+
+      @Override
+      protected void process(List<Edge> chunks) {
+        for (Edge edge : chunks) {
+          addEdge(model.getGraph(), edge);
+        }
+      }
+
+      @Override
+      protected void done() {
+        model.getViewer().repaint();
+      }
+    });
+
   }
 }

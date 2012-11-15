@@ -44,7 +44,7 @@ public class OrientDbLoader implements GraphLoader {
       Class<? extends Graph> graphClass = (Class<? extends Graph>) classLoader.loadClass(bpOrient);
       Object first = args[0];
       if (first instanceof String) {
-        first = "local://" + first;
+        first = "local:" + first;
       }
       if (args.length == 3) {
         return graphClass.getConstructor(String.class, String.class, String.class).newInstance(first, args[1], args[2]);

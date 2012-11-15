@@ -20,6 +20,8 @@ import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.Vertex;
 import org.eknet.neoswing.ComponentFactory;
+import org.eknet.neoswing.DbAction;
+import org.eknet.neoswing.ElementId;
 import org.eknet.neoswing.GraphDb;
 import org.eknet.neoswing.GraphModel;
 import org.eknet.neoswing.utils.NeoSwingUtil;
@@ -40,26 +42,19 @@ import java.util.List;
  */
 public class RelationTypesPanel extends JPanel {
 
-  private GraphModel model;
-  private Vertex node;
+  private final GraphModel model;
+  private ElementId<Vertex> nodeId;
 
   private JLabel infoLabel;
 
   private final ComponentFactory factory;
   private final RelationTypeTableModel tableModel = new RelationTypeTableModel();
   
-  public RelationTypesPanel() {
-    this(NeoSwingUtil.getFactory(true));
-  }
 
-  public RelationTypesPanel(Vertex node) {
-    this(NeoSwingUtil.getFactory(true));
-    setNode(node);
-  }
-
-  public RelationTypesPanel(ComponentFactory factory) {
+  public RelationTypesPanel(GraphModel model, ComponentFactory factory) {
     super(new BorderLayout(), true);
     this.factory = factory;
+    this.model = model;
     
     final JTable table = factory.createTable();
     table.setModel(tableModel);
@@ -88,55 +83,83 @@ public class RelationTypesPanel extends JPanel {
 
   private void updateComponents() {
     tableModel.reload();
-    if (node != null) {
-      StringBuilder text = new StringBuilder();
-      text.append("RelationshipTypes of ");
-      text.append("node ").append(node.getId());
-      text.append(" [").append(tableModel.getRowCount()).append("]");
-      infoLabel.setText(text.toString());
+    if (nodeId != null) {
+      model.execute(new DbAction<String, Object>() {
+        @Override
+        protected String doInTx(GraphModel model) {
+          Vertex v = model.getDatabase().lookup(nodeId);
+          StringBuilder text = new StringBuilder();
+          text.append("RelationshipTypes of ");
+          text.append("node ").append(v.getId());
+          text.append(" [").append(tableModel.getRowCount()).append("]");
+          return text.toString();
+        }
+
+        @Override
+        protected void done() {
+          infoLabel.setText(safeGet());
+        }
+      });
     } else {
       infoLabel.setText(null);
     } 
   }
 
-  private GraphModel getModel() {
-    if (model == null) {
-      model = NeoSwingUtil.getGraphModel(this);
-    }
-    return model;
-  }
-
-  public void setNode(Vertex node) {
-    if (node != null && this.node != null) {
-      if (node.getId() == this.node.getId()) {
+  public void setNodeId(ElementId<Vertex> id) {
+    if (id != null && this.nodeId != null) {
+      if (id.equals(this.nodeId)) {
         return;
       }
     }
-    this.node = node;
+    this.nodeId = id;
     updateComponents();
   }
 
-  public Vertex getNode() {
-    return node;
-  }
-
-  private void setRelationshipsVisible(String type, Direction direction) {
-    Iterable<Edge> relationships = direction != null
-            ? node.getEdges(direction, type)
+  private void setRelationshipsVisible(final String type, final Direction direction) {
+    model.execute(new DbAction<Object, Runnable>() {
+      @Override
+      protected Object doInTx(GraphModel model) {
+        final Vertex v = model.getDatabase().lookup(nodeId);
+        Iterable<Edge> relationships = direction != null
+            ? v.getEdges(direction, type)
             : new ArrayList<Edge>();
-    for (Edge rt : relationships) {
-      NeoSwingUtil.addEdge(getModel().getGraph(), rt);
-    }
-    if (direction != Direction.BOTH) {
-      relationships = direction != null
-              ? node.getEdges(direction.opposite(), type)
-              : node.getEdges(Direction.BOTH, type);
-      for (Edge rt : relationships) {
-        getModel().getGraph().removeEdge(rt);
-        getModel().getGraph().removeVertex(GraphDb.getOtherNode(rt, node));
+        for (final Edge edge : relationships) {
+          publish(new Runnable() {
+            @Override
+            public void run() {
+              NeoSwingUtil.addEdge(getModel().getGraph(), edge);
+            }
+          });
+        }
+        if (direction != Direction.BOTH) {
+          relationships = direction != null
+              ? v.getEdges(direction.opposite(), type)
+              : v.getEdges(Direction.BOTH, type);
+          for (final Edge rt : relationships) {
+            publish(new Runnable() {
+              @Override
+              public void run() {
+                getModel().getGraph().removeEdge(rt);
+                getModel().getGraph().removeVertex(GraphDb.getOtherNode(rt, v));
+              }
+            });
+          }
+        }
+        return null;
       }
-    }
-    getModel().getViewer().repaint();
+
+      @Override
+      protected void process(List<Runnable> chunks) {
+        for (Runnable r : chunks) {
+          r.run();
+        }
+      }
+
+      @Override
+      protected void done() {
+        getModel().getViewer().repaint();
+      }
+    });
   }
 
   final class RelationTypeTableModel extends AbstractTableModel {
@@ -150,14 +173,28 @@ public class RelationTypesPanel extends JPanel {
     }
     
     private void load() {
-      if (data.isEmpty() && node != null) {
-        for (Edge rt : node.getEdges(Direction.BOTH)) {
-          RelationTypeEntry entry = new RelationTypeEntry(rt.getLabel());
-          if (!data.contains(entry)) {
-            data.add(entry);
+      if (data.isEmpty() && nodeId != null) {
+        model.execute(new DbAction<Object, Object>() {
+          @Override
+          protected Object doInTx(GraphModel model) {
+            //noinspection ConstantConditions
+            if (nodeId != null) {
+              Vertex v = model.getDatabase().lookup(nodeId);
+              for (Edge rt : v.getEdges(Direction.BOTH)) {
+                RelationTypeEntry entry = new RelationTypeEntry(rt.getLabel());
+                if (!data.contains(entry)) {
+                  data.add(entry);
+                }
+              }
+            }
+            return null;
           }
-        }
-        fireTableDataChanged();
+
+          @Override
+          protected void done() {
+            fireTableDataChanged();
+          }
+        });
       }
     }
 

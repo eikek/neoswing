@@ -17,7 +17,9 @@
 package org.eknet.neoswing.actions;
 
 import com.tinkerpop.blueprints.Element;
-import org.eknet.neoswing.GraphDb;
+import org.eknet.neoswing.DbAction;
+import org.eknet.neoswing.ElementId;
+import org.eknet.neoswing.GraphModel;
 import org.eknet.neoswing.utils.Dialog;
 import org.eknet.neoswing.utils.Dialogs;
 import org.eknet.neoswing.utils.NeoSwingUtil;
@@ -30,16 +32,16 @@ import java.awt.event.ActionEvent;
  */
 public class DeletePropertyAction extends AbstractSwingAction {
 
-  private final GraphDb db;
-  private Element element;
+  private final GraphModel model;
+  private ElementId<?> element;
   private String key;
 
-  public DeletePropertyAction(GraphDb db) {
-    this(db, null, null);
+  public DeletePropertyAction(GraphModel model) {
+    this(model, null, null);
   }
 
-  public DeletePropertyAction(GraphDb db, Element element, String key) {
-    this.db = db;
+  public DeletePropertyAction(GraphModel model, ElementId<?> element, String key) {
+    this.model = model;
     this.element = element;
     this.key = key;
 
@@ -48,11 +50,7 @@ public class DeletePropertyAction extends AbstractSwingAction {
     putValue(SMALL_ICON, NeoSwingUtil.icon("delete"));
   }
 
-  public Element getElement() {
-    return element;
-  }
-
-  public void setElement(Element element) {
+  public void setElement(ElementId<?> element) {
     this.element = element;
     setEnabled(element != null && key != null);
   }
@@ -72,15 +70,16 @@ public class DeletePropertyAction extends AbstractSwingAction {
       if (option != Dialog.Option.OK) {
         return;
       }
-      GraphDb.Tx tx = db.beginTx();
-      try {
-        if (element.getProperty(key) != null) {
-          element.removeProperty(key);
+      model.execute(new DbAction<Object, Object>() {
+        @Override
+        protected Object doInTx(GraphModel model) {
+          Element el = model.getDatabase().lookup(element);
+          if (el.getProperty(key) != null) {
+            el.removeProperty(key);
+          }
+          return null;
         }
-        tx.success();
-      } finally {
-        tx.finish();
-      }
+      });
     }
   }
 }

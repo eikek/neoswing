@@ -23,6 +23,8 @@ import java.io.FileFilter;
 import java.io.FilenameFilter;
 import java.lang.reflect.Constructor;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author <a href="mailto:eike.kettner@gmail.com">Eike Kettner</a>
@@ -47,9 +49,12 @@ public class Neo4JEmbeddedLoader implements GraphLoader {
 
   public Graph loadGraph(Object... args) {
     try {
+      Map<String, String> params = new HashMap<String, String>();
+      params.put("allow_store_upgrade", "true");
       checkDirectory(new File((String) args[0]));
       Class neodbClass = classLoader.loadClass(NAME);
-      Object neodb = findConstructor(neodbClass, args).newInstance(args);
+      Object neodb = neodbClass.getConstructor(String.class, Map.class).newInstance(args[0], params);
+          //findConstructor(neodbClass, args).newInstance(args);
 
       Class<?> arg = classLoader.loadClass(neoGraphDb);
       Class<? extends Graph> graphClass = (Class<? extends Graph>) classLoader.loadClass(bpName);

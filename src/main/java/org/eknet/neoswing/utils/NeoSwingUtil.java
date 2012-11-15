@@ -24,6 +24,7 @@ import edu.uci.ics.jung.graph.Graph;
 import edu.uci.ics.jung.graph.util.EdgeType;
 import org.eknet.neoswing.ComponentFactory;
 import org.eknet.neoswing.DefaultComponentFactory;
+import org.eknet.neoswing.ElementId;
 import org.eknet.neoswing.GraphModel;
 import org.eknet.neoswing.JideComponentFactory;
 import org.eknet.neoswing.loader.Neo4JEmbeddedLoader;
@@ -32,9 +33,15 @@ import org.eknet.neoswing.loader.TitanLoader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.swing.*;
+import javax.swing.Action;
+import javax.swing.Icon;
+import javax.swing.ImageIcon;
 import javax.swing.border.Border;
-import java.awt.*;
+import java.awt.Component;
+import java.awt.Graphics;
+import java.awt.Image;
+import java.awt.Insets;
+import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.io.IOException;
 import java.net.URL;
@@ -168,12 +175,17 @@ public final class NeoSwingUtil {
     return new ImageIcon(url);
   }
 
-  public static void addEdge(Graph<Vertex, Edge> graph, Edge relationship) {
+  public static void addEdge(final Graph<Vertex, Edge> graph, final Edge relationship) {
     if (!graph.containsEdge(relationship)) {
-      graph.addEdge(relationship,
+      EdtExecutor.instance.execute(new Runnable() {
+        @Override
+        public void run() {
+          graph.addEdge(relationship,
               relationship.getVertex(Direction.OUT),
               relationship.getVertex(Direction.IN),
               EdgeType.DIRECTED);
+        }
+      });
     }
   }
 
@@ -229,7 +241,7 @@ public final class NeoSwingUtil {
     return pc.getId().toString();
   }
 
-  public static boolean equals(Element pc1, Element pc2) {
+  public static <A> boolean equals(ElementId<?> pc1, ElementId<?> pc2) {
     if (pc1 == null && pc2 == null) {
       return true;
     }
@@ -242,7 +254,7 @@ public final class NeoSwingUtil {
     if (pc1.getClass() != pc2.getClass()) {
       return false;
     }
-    return NeoSwingUtil.getId(pc1) == NeoSwingUtil.getId(pc2);
+    return pc1.equals(pc2);
   }
 
   // ~~ code below is copied from cru-swing class SwingUtil

@@ -1,8 +1,8 @@
 NeoSwing
 ========
 
-A simple swing-based GUI for [Neo4j](http://neo4j.org/) databases
-that uses the [JUNG](http://jung.sourceforge.net/) library for
+A simple swing-based GUI for [Bluepints](https://github.com/tinkerpop/blueprints)
+enabled databases, that uses the [JUNG](http://jung.sourceforge.net/) library for
 visuaization.
 
 ![screenshot](https://github.com/eikek/neoswing/raw/master/screenshot.png)

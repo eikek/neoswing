@@ -20,13 +20,15 @@ import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.Element;
 import com.tinkerpop.blueprints.Vertex;
-import org.eknet.neoswing.GraphDb;
+import org.eknet.neoswing.DbAction;
+import org.eknet.neoswing.ElementId;
 import org.eknet.neoswing.GraphModel;
 import org.eknet.neoswing.utils.Dialog;
 import org.eknet.neoswing.utils.Dialogs;
 import org.eknet.neoswing.utils.NeoSwingUtil;
 
 import java.awt.event.ActionEvent;
+import java.util.List;
 
 /**
  * @author <a href="mailto:eike.kettner@gmail.com">Eike Kettner</a>
@@ -34,14 +36,14 @@ import java.awt.event.ActionEvent;
  */
 public class DeleteElementAction extends AbstractSwingAction {
 
-  private final Element element;
+  private final ElementId<?> element;
   private final GraphModel graphModel;
 
-  public DeleteElementAction(Element element, GraphModel graphModel) {
+  public DeleteElementAction(ElementId<?> element, GraphModel graphModel) {
     this.element = element;
     this.graphModel = graphModel;
 
-    putValue(NAME, "Delete " + (element instanceof Vertex ? "Vertex" : "Edge"));
+    putValue(NAME, "Delete " + (element.isVertex() ? "Vertex" : "Edge"));
     putValue(SMALL_ICON, NeoSwingUtil.icon("bin"));
   }
 
@@ -55,35 +57,64 @@ public class DeleteElementAction extends AbstractSwingAction {
     if (option != Dialog.Option.OK) {
       return;
     }
-    GraphDb db = graphModel.getDatabase();
-    GraphDb.Tx tx = db.beginTx();
-    try {
-      if (element instanceof Vertex) {
-        Vertex node = (Vertex) element;
-        Iterable<Edge> relationships = node.getEdges(Direction.BOTH);
-        if (relationships.iterator().hasNext()) {
-          option = Dialogs.confirm(graphModel.getViewer(), "The Vertex has Edges associated. " +
-              "Do you want to delete all those Edges, too?");
-          if (option != Dialog.Option.OK) {
-            return;
-          } else {
-            for (Edge rel : relationships) {
-              db.deleteEdge(rel);
-              graphModel.getGraph().removeEdge(rel);
+    graphModel.execute(new DbAction<Object, Runnable>() {
+      @Override
+      protected Object doInTx(GraphModel model) {
+        Element el = model.getDatabase().lookup(element);
+        if (el instanceof Vertex) {
+          final Vertex node = (Vertex) el;
+          final Iterable<Edge> relationships = node.getEdges(Direction.BOTH);
+          if (relationships.iterator().hasNext()) {
+            Dialog.Option option = Dialogs.confirm(graphModel.getViewer(), "The Vertex has Edges associated. " +
+                "Do you want to delete all those Edges, too?");
+            if (option != Dialog.Option.OK) {
+              return null;
+            } else {
+              for (Edge rel : relationships) {
+                model.getDatabase().deleteEdge(rel);
+              }
+              publish(new Runnable() {
+                @Override
+                public void run() {
+                  for (Edge rel : relationships) {
+                    graphModel.getGraph().removeEdge(rel);
+                  }
+                }
+              });
             }
-          } 
+          }
+          model.getDatabase().deleteVertex(node);
+          publish(new Runnable() {
+            @Override
+            public void run() {
+              graphModel.getGraph().removeVertex(node);
+            }
+          });
         }
-        db.deleteVertex(node);
-        graphModel.getGraph().removeVertex(node);
+        if (el instanceof Edge) {
+          final Edge e = (Edge) el;
+          model.getDatabase().deleteEdge(e);
+          publish(new Runnable() {
+            @Override
+            public void run() {
+              graphModel.getGraph().removeEdge(e);
+            }
+          });
+        }
+        return null;
       }
-      if (element instanceof Edge) {
-        db.deleteEdge(((Edge) element));
-        graphModel.getGraph().removeEdge((Edge) element);
+
+      @Override
+      protected void process(List<Runnable> chunks) {
+        for (Runnable r : chunks) {
+          r.run();
+        }
       }
-      tx.success();
-      graphModel.getViewer().repaint();
-    } finally {
-      tx.finish();
-    }
+
+      @Override
+      protected void done() {
+        graphModel.getViewer().repaint();
+      }
+    });
   }
 }

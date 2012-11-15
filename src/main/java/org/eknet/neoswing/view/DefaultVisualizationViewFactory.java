@@ -26,6 +26,7 @@ import edu.uci.ics.jung.visualization.control.DefaultModalGraphMouse;
 import edu.uci.ics.jung.visualization.renderers.Renderer;
 import edu.uci.ics.jung.visualization.renderers.VertexLabelAsShapeRenderer;
 import org.apache.commons.collections15.Transformer;
+import org.eknet.neoswing.DbAction;
 import org.eknet.neoswing.GraphDb;
 import org.eknet.neoswing.GraphModel;
 import org.eknet.neoswing.NeoSwing;
@@ -37,9 +38,14 @@ import org.eknet.neoswing.view.control.NodePopupMenu;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Paint;
+import java.awt.Rectangle;
+import java.awt.Shape;
 import java.awt.event.MouseEvent;
 import java.awt.geom.RoundRectangle2D;
+import java.util.WeakHashMap;
+import java.util.concurrent.TimeUnit;
 import java.util.prefs.Preferences;
 
 /**
@@ -63,12 +69,13 @@ public class DefaultVisualizationViewFactory implements VisualizationViewFactory
   }
   
   @Override
-  public VisualizationViewer<Vertex, Edge> createViewer(final Graph<Vertex, Edge> graph, final GraphDb db) {
+  public VisualizationViewer<Vertex, Edge> createViewer(Graph<Vertex, Edge> graph, GraphDb db) {
     final VisualizationViewer<Vertex, Edge> vv =
         new VisualizationViewer<Vertex, Edge>(new FRLayout2<Vertex, Edge>(graph));
     vv.getModel().getRelaxer().setSleepTime(0);
     DefaultModalGraphMouse<Vertex, Edge> mouseSupport = new DefaultModalGraphMouse<Vertex,Edge>();
-    addMousePlugins(mouseSupport, new SimpleGraphModel(graph, vv, db));
+    final GraphModel model = new SimpleGraphModel(graph, vv, db);
+    addMousePlugins(mouseSupport, model);
     vv.setGraphMouse(mouseSupport);
     vv.addKeyListener(mouseSupport.getModeKeyListener());
     vv.setToolTipText("<html><center>Type 'p' for Pick mode<p>Type 't' for Transform mode");
@@ -84,34 +91,7 @@ public class DefaultVisualizationViewFactory implements VisualizationViewFactory
     vertexShape.setPosition(Renderer.VertexLabel.Position.CNTR);
     vv.setBackground(Color.WHITE);
     vv.getRenderContext().setVertexShapeTransformer(vertexShape);
-    vv.getRenderContext().setVertexLabelTransformer(new Transformer<Vertex, String>() {
-
-      @Override
-      public String transform(Vertex node) {
-        GraphDb.Tx tx = db.beginTx();
-        try {
-          final String key = createDefaultLabelPrefKey(node, db);
-          String label = prefs.get(key, null);
-          if (label != null) {
-            if (node.getProperty(label) != null) {
-              return node.getId() + ": " + node.getProperty(label).toString();
-            }
-          }
-          if (node.getProperty("name") != null) {
-            return node.getId() + ": " + node.getProperty("name");
-          }
-          String s = node.toString();
-          tx.success();
-          return s;
-        } catch (Exception e) {
-          log.error("Error rendering label", e);
-          tx.success();
-          return node.toString();
-        } finally {
-          tx.finish();
-        }
-      }
-    });
+    vv.getRenderContext().setVertexLabelTransformer(new VertexTransformer(model));
     vv.getRenderer().setVertexLabelRenderer(vertexShape);
     vv.getRenderContext().setVertexFillPaintTransformer(new Transformer<Vertex, Paint>() {
       private Color nodefill = Color.getHSBColor(207, 19, 97);
@@ -126,9 +106,27 @@ public class DefaultVisualizationViewFactory implements VisualizationViewFactory
     });
 
     vv.getRenderContext().setEdgeLabelTransformer(new Transformer<Edge, String>() {
+
+      private final WeakHashMap<Object, String> cache = new WeakHashMap<Object, String>();
+
       @Override
-      public String transform(Edge e) {
-        return e.getLabel();
+      public String transform(final Edge e) {
+        String s = cache.get(e.getId());
+        if (s == null) {
+          s = "<null>";
+          GraphDb.Tx tx = model.getDatabase().beginTx();
+          try {
+            Edge edge = model.getDatabase().lookupEdge(e.getId());
+            s = edge.getLabel();
+            tx.success();
+            cache.put(edge.getId(), s);
+          } catch (Exception e1) {
+            log.error("Error obtaining edge label", e1);
+          } finally {
+            tx.finish();
+          }
+        }
+        return s;
       }
     });
 
@@ -139,5 +137,49 @@ public class DefaultVisualizationViewFactory implements VisualizationViewFactory
     plugin.add(new NodePopupMenu(MouseEvent.BUTTON3));
     plugin.add(new NavigateNodeMousePlugin(graphModel));
   }
-  
+
+  static class VertexTransformer implements Transformer<Vertex, String> {
+    private final GraphModel model;
+    private final WeakHashMap<Object, String> cache = new WeakHashMap<Object, String>();
+
+    VertexTransformer(GraphModel model) {
+      this.model = model;
+    }
+
+    @Override
+    public synchronized String transform(final Vertex vertex) {
+      String s = cache.get(vertex.getId());
+      if (s == null) {
+        s = "<null>";
+        log.info(">> cache is null: " + vertex);
+        DbAction<String, Object> action = new DbAction<String, Object>() {
+          @Override
+          protected String doInTx(GraphModel model) {
+            Vertex v = model.getDatabase().lookupVertex(vertex.getId());
+            final String key = createDefaultLabelPrefKey(v, model.getDatabase());
+            String label = prefs.get(key, null);
+            if (label != null) {
+              if (v.getProperty(label) != null) {
+                return v.getId() + ": " + v.getProperty(label).toString();
+              }
+            }
+            if (v.getProperty("name") != null) {
+              return v.getId() + ": " + v.getProperty("name");
+            }
+            return v.toString();
+          }
+        };
+        model.execute(action);
+        try {
+          s = action.get(5, TimeUnit.SECONDS);
+          cache.put(vertex.getId(), s);
+        } catch (InterruptedException e) {
+          Thread.currentThread().interrupt();
+        } catch (Exception e) {
+          log.error("Error obtaining vertex label", e);
+        }
+      }
+      return s;
+    }
+  }
 }

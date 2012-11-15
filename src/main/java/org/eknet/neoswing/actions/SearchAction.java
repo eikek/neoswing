@@ -17,17 +17,18 @@
 package org.eknet.neoswing.actions;
 
 import com.tinkerpop.blueprints.Edge;
+import com.tinkerpop.blueprints.Element;
 import com.tinkerpop.blueprints.Vertex;
-import edu.uci.ics.jung.graph.Graph;
-import org.eknet.neoswing.GraphDb;
+import org.eknet.neoswing.DbAction;
+import org.eknet.neoswing.GraphModel;
 import org.eknet.neoswing.utils.Dialog;
-import org.eknet.neoswing.utils.Dialogs;
 import org.eknet.neoswing.utils.NeoSwingUtil;
 import org.eknet.neoswing.view.SearchView;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.awt.event.ActionEvent;
+import java.util.List;
 
 /**
  * @author <a href="mailto:eike.kettner@gmail.com">Eike Kettner</a>
@@ -36,13 +37,11 @@ import java.awt.event.ActionEvent;
 public class SearchAction extends AbstractSwingAction {
   private static final Logger log = LoggerFactory.getLogger(SearchAction.class);
   
-  private GraphDb db;
-  private Graph<Vertex, Edge> graph;
+  private GraphModel model;
   private SearchView searchView;
   
-  public SearchAction(GraphDb db, Graph<Vertex, Edge> graph) {
-    this.db = db;
-    this.graph = graph;
+  public SearchAction(GraphModel model) {
+    this.model = model;
     this.searchView = new SearchView();
     putValue(NAME, "Search nodes or relationships");
     putValue(SHORT_DESCRIPTION, "Search nodes or relationships");
@@ -57,38 +56,52 @@ public class SearchAction extends AbstractSwingAction {
     if (option != Dialog.Option.OK) {
       return;
     }
-    String type = searchView.getType();
-    String key = searchView.getKey();
-    Object value = searchView.getValue();
-    GraphDb.Tx tx = db.beginTx();
-    try {
-      if (type.equals("Vertex")) {
-        if (key == null || key.isEmpty() || value == null) {
-          for (Vertex v : db.getVertices()) {
-            graph.addVertex(v);
+    final String type = searchView.getType();
+    final String key = searchView.getKey();
+    final Object value = searchView.getValue();
+
+    model.execute(new DbAction<Object, Element>() {
+      @Override
+      protected Object doInTx(GraphModel model) {
+        if (type.equals("Vertex")) {
+          if (key == null || key.isEmpty() || value == null) {
+            for (Vertex v : model.getDatabase().getVertices()) {
+              publish(v);
+            }
+          } else {
+            for (Vertex v : model.getDatabase().getVertices(key, value)) {
+              publish(v);
+            }
           }
         } else {
-          for (Vertex v : db.getVertices(key, value)) {
-            graph.addVertex(v);
+          if (key == null || key.isEmpty() || value == null) {
+            for (Edge edge : model.getDatabase().getEdges()) {
+              publish(edge);
+            }
+          } else {
+            for (Edge edge : model.getDatabase().getEdges(searchView.getKey(), searchView.getValue())) {
+              publish(edge);
+            }
           }
         }
-      } else {
-        if (key == null || key.isEmpty() || value == null) {
-          for (Edge edge : db.getEdges()) {
-            NeoSwingUtil.addEdge(graph,  edge);
-          }
-        } else {
-          for (Edge edge : db.getEdges(searchView.getKey(), searchView.getValue())) {
-            NeoSwingUtil.addEdge(graph, edge);
-          }
-        }
+        return null;
       }
-      tx.success();
-    } catch (Exception error) {
-      log.error("Error searching index", error);
-      Dialogs.error(getWindow(e), "Error searching. Make sure you used the right syntax.\n\nMessage: " + error.getLocalizedMessage());
-    } finally {
-      tx.finish();
-    }
+
+      @Override
+      protected void process(List<Element> chunks) {
+        for (Element el : chunks) {
+          if (el instanceof Vertex) {
+            Vertex vertex = (Vertex) el;
+            getModel().getGraph().addVertex(vertex);
+          }
+          if (el instanceof Edge) {
+            Edge edge = (Edge) el;
+            NeoSwingUtil.addEdge(getModel().getGraph(), edge);
+          }
+        }
+        getModel().getViewer().repaint();
+      }
+
+    });
   }
 }

@@ -17,7 +17,9 @@
 package org.eknet.neoswing.actions;
 
 import com.tinkerpop.blueprints.Element;
-import org.eknet.neoswing.GraphDb;
+import org.eknet.neoswing.DbAction;
+import org.eknet.neoswing.ElementId;
+import org.eknet.neoswing.GraphModel;
 import org.eknet.neoswing.NeoSwing;
 import org.eknet.neoswing.view.DefaultVisualizationViewFactory;
 
@@ -32,21 +34,21 @@ public class SetDefaultLabelAction extends AbstractSwingAction {
   
   private final static Preferences prefs = Preferences.userNodeForPackage(NeoSwing.class);
 
-  private final GraphDb db;
+  private final GraphModel model;
 
-  private Element element;
+  private ElementId<?> element;
   private String key;
 
-  public SetDefaultLabelAction(GraphDb db, Element element, String key) {
-    this.db = db;
+  public SetDefaultLabelAction(GraphModel model, ElementId<?> element, String key) {
+    this.model = model;
     setElement(element);
     setKey(key);
     putValue(NAME, "Set default label");
     putValue(SHORT_DESCRIPTION, "Sets this property to use for the node label in the graph");
   }
 
-  public SetDefaultLabelAction(GraphDb db) {
-    this(db, null, null);
+  public SetDefaultLabelAction(GraphModel model) {
+    this(model, null, null);
   }
 
   @Override
@@ -54,15 +56,19 @@ public class SetDefaultLabelAction extends AbstractSwingAction {
     if (element == null || key == null) {
       return;
     }
-    String prefKey = DefaultVisualizationViewFactory.createDefaultLabelPrefKey(element, db);
-    prefs.put(prefKey, key);
+    model.execute(new DbAction<Object, Object>() {
+      @Override
+      protected Object doInTx(GraphModel model) {
+        Element el = model.getDatabase().lookup(element);
+        String prefKey = DefaultVisualizationViewFactory.createDefaultLabelPrefKey(el, getModel().getDatabase());
+        prefs.put(prefKey, key);
+        return null;
+      }
+    });
+
   }
 
-  public Element getElement() {
-    return element;
-  }
-
-  public void setElement(Element element) {
+  public void setElement(ElementId<?> element) {
     this.element = element;
     setEnabled(element != null && key != null);
   }

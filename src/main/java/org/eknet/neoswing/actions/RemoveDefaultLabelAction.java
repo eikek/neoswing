@@ -17,11 +17,13 @@
 package org.eknet.neoswing.actions;
 
 import com.tinkerpop.blueprints.Element;
-import org.eknet.neoswing.GraphDb;
+import org.eknet.neoswing.DbAction;
+import org.eknet.neoswing.ElementId;
+import org.eknet.neoswing.GraphModel;
 import org.eknet.neoswing.NeoSwing;
 import org.eknet.neoswing.view.DefaultVisualizationViewFactory;
 
-import javax.swing.*;
+import javax.swing.AbstractAction;
 import java.awt.event.ActionEvent;
 import java.util.prefs.Preferences;
 
@@ -33,21 +35,17 @@ public class RemoveDefaultLabelAction extends AbstractAction {
 
   private final static Preferences prefs = Preferences.userNodeForPackage(NeoSwing.class);
 
-  private final GraphDb db;
-  private Element element;
+  private final GraphModel model;
+  private ElementId<?> element;
 
-  public RemoveDefaultLabelAction(GraphDb db, Element element) {
-    this.db = db;
+  public RemoveDefaultLabelAction(GraphModel model, ElementId<?> element) {
+    this.model = model;
     setElement(element);
     putValue(NAME, "Remove default label");
     putValue(SHORT_DESCRIPTION, "Removes the default label settings for this node");
   }
 
-  public Element getElement() {
-    return element;
-  }
-
-  public void setElement(Element element) {
+  public void setElement(ElementId<?> element) {
     this.element = element;
     setEnabled(this.element != null);
   }
@@ -57,7 +55,14 @@ public class RemoveDefaultLabelAction extends AbstractAction {
     if (element == null) {
       return;
     }
-    String key = DefaultVisualizationViewFactory.createDefaultLabelPrefKey(element, db);
-    prefs.remove(key);
+    model.execute(new DbAction<Object, Object>() {
+      @Override
+      protected Object doInTx(GraphModel model) {
+        Element el = model.getDatabase().lookup(element);
+        String key = DefaultVisualizationViewFactory.createDefaultLabelPrefKey(el, model.getDatabase());
+        prefs.remove(key);
+        return null;
+      }
+    });
   }
 }
