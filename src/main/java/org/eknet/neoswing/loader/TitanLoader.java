@@ -24,27 +24,24 @@ import java.lang.reflect.Method;
  * @author <a href="mailto:eike.kettner@gmail.com">Eike Kettner</a>
  * @since 14.11.12 23:10
  */
-public class TitanLoader implements GraphLoader {
+public class TitanLoader extends AbstractGraphLoader {
 
   public static final String NAME = "com.thinkaurelius.titan.core.TitanGraph";
 
   private static final String titanConfig = "com.thinkaurelius.titan.core.TitanFactory";
 
-  private final ClassLoader classLoader;
-
   public TitanLoader(ClassLoader classLoader) {
-    this.classLoader = classLoader;
+    super(classLoader);
   }
 
   public TitanLoader() {
-    this(Thread.currentThread().getContextClassLoader());
   }
 
   @Override
   public Graph loadGraph(Object... args) {
     try {
       Class factoryClass = classLoader.loadClass(titanConfig);
-      Method m = factoryClass.getDeclaredMethod("open", String.class);
+      Method m = findMatchingMethod(factoryClass, "open", args);
       Object o = m.invoke(null, args);
       return (Graph) o;
     } catch (Exception e) {

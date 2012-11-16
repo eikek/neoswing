@@ -17,8 +17,10 @@
 package org.eknet.neoswing.loader;
 
 import com.tinkerpop.blueprints.Graph;
+import org.apache.commons.collections15.Predicate;
+import org.apache.commons.collections15.iterators.FilterIterator;
 
-import java.util.Collections;
+import java.util.Iterator;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -53,7 +55,18 @@ public final class DefaultGraphLoaderManager implements GraphLoaderManager {
 
   @Override
   public Iterable<String> getRegisteredLoaders() {
-    return Collections.unmodifiableCollection(loaders.keySet());
+    return new Iterable<String>() {
+      @Override
+      public Iterator<String> iterator() {
+        return new FilterIterator<String>(loaders.keySet().iterator(), new Predicate<String>() {
+          @Override
+          public boolean evaluate(String s) {
+            GraphLoader gl = loaders.get(s);
+            return gl != null && gl.isSupported();
+          }
+        });
+      }
+    };
   }
 
   @Override

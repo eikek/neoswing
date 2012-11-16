@@ -42,4 +42,11 @@ public interface GraphLoader {
    * @return
    */
   String getName();
+
+  /**
+   * Returns whether this loader can be used. This would usually check the
+   * existance of the required third party library.
+   * @return
+   */
+  boolean isSupported();
 }

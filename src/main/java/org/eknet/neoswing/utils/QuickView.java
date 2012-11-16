@@ -16,10 +16,11 @@
 
 package org.eknet.neoswing.utils;
 
+import com.tinkerpop.blueprints.Graph;
 import org.eknet.neoswing.GraphDb;
 import org.eknet.neoswing.view.GraphViewer;
 
-import javax.swing.*;
+import javax.swing.UIManager;
 
 /**
  * @author <a href="mailto:eike.kettner@gmail.com">Eike Kettner</a>
@@ -45,5 +46,9 @@ public final class QuickView {
     dialog.setIcon(NeoSwingUtil.getFrameIcon());
     dialog.setShowCancelOption(false);
     dialog.show();
+  }
+
+  public static void show(Graph graph) {
+    show(new GraphDb(graph));
   }
 }

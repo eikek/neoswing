@@ -22,10 +22,10 @@ can be executed:
 
     java -jar neoswing-{version}-bin.jar
 
-Optional, a directory can be specified as argument that is either empty
-or denotes a valid neo4j database directory. If an empty directory is
-specified, a new database is created. A database can always be selected
-via the Gui.
+The "big jar" contains the orientdb and titan embedded graph databases. Neo4j
+is excluded due to license incompatibility. You can quickly download `neo4j-kernel`
+and `blueprints-neo4j-graph` jar files and place them right next to the neoswing
+jar file (or in `lib` folder).
 
 The `QuickView` class provides static methods to quickly fire up a frame
 or dialog of a database. That is often handy during development, when
@@ -40,8 +40,8 @@ OSGi
 
 NeoSwing' default artifact contains OSGi bundle headers so it can be
 deployed to an OSGi container. However, dependencies must be set up properly.
-It is necessary to deploy [Neo4j](http://neo4j.org/) and [JUNG](http://jung.sourceforge.net/)
-(visualization and algorithms) together with NeoSwing.
+It is necessary to deploy [JUNG](http://jung.sourceforge.net/) (visualization
+and algorithms) and Blueprints-Core together with NeoSwing.
 
 To support this, a [Karaf](http://karaf.apache.org) features file is
 provided. Add it using the following url
@@ -53,3 +53,5 @@ Then deploying NeoSwing can be achieved with
     features:install neoswing
 
 This will install NeoSwing and its dependencies.
+
+Note, the concrete database bundles are not mentioned in the features file.

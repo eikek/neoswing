@@ -23,43 +23,39 @@ import java.io.FileFilter;
 import java.io.FilenameFilter;
 import java.lang.reflect.Constructor;
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * @author <a href="mailto:eike.kettner@gmail.com">Eike Kettner</a>
  * @since 14.11.12 22:37
  */
-public class Neo4JEmbeddedLoader implements GraphLoader {
+public class Neo4JEmbeddedLoader extends AbstractGraphLoader {
 
   public static final String NAME = "org.neo4j.kernel.EmbeddedGraphDatabase";
 
   private static final String neoGraphDb = "org.neo4j.graphdb.GraphDatabaseService";
   private static final String bpName = "com.tinkerpop.blueprints.impls.neo4j.Neo4jGraph";
 
-  private final ClassLoader classLoader;
-
   public Neo4JEmbeddedLoader(ClassLoader classLoader) {
-    this.classLoader = classLoader;
+    super(classLoader);
   }
 
   public Neo4JEmbeddedLoader() {
-    this.classLoader = Thread.currentThread().getContextClassLoader();
+  }
+
+  @Override
+  public boolean isSupported() {
+    return isClassAvailable(NAME) && isClassAvailable(bpName);
   }
 
   public Graph loadGraph(Object... args) {
     try {
-      Map<String, String> params = new HashMap<String, String>();
-      params.put("allow_store_upgrade", "true");
       checkDirectory(new File((String) args[0]));
       Class neodbClass = classLoader.loadClass(NAME);
-      Object neodb = neodbClass.getConstructor(String.class, Map.class).newInstance(args[0], params);
-          //findConstructor(neodbClass, args).newInstance(args);
+      Object neodb = findMatchingCtor(neodbClass, args).newInstance(args);
 
       Class<?> arg = classLoader.loadClass(neoGraphDb);
       Class<? extends Graph> graphClass = (Class<? extends Graph>) classLoader.loadClass(bpName);
-      Graph g = graphClass.getConstructor(arg).newInstance(neodb);
-      return g;
+      return graphClass.getConstructor(arg).newInstance(neodb);
     } catch (Exception e) {
       throw new RuntimeException(e);
     }

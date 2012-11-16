@@ -22,20 +22,17 @@ import com.tinkerpop.blueprints.Graph;
  * @author <a href="mailto:eike.kettner@gmail.com">Eike Kettner</a>
  * @since 14.11.12 22:57
  */
-public class OrientDbLoader implements GraphLoader {
+public class OrientDbLoader extends AbstractGraphLoader {
 
   public static final String NAME = "com.orientechnologies.orient.core.db.graph.OGraphDatabase";
 
   private static final String bpOrient = "com.tinkerpop.blueprints.impls.orient.OrientGraph";
 
-  private final ClassLoader classLoader;
-
   public OrientDbLoader(ClassLoader classLoader) {
-    this.classLoader = classLoader;
+    super(classLoader);
   }
 
   public OrientDbLoader() {
-    this(Thread.currentThread().getContextClassLoader());
   }
 
   @Override
@@ -45,13 +42,10 @@ public class OrientDbLoader implements GraphLoader {
       Object first = args[0];
       if (first instanceof String) {
         first = "local:" + first;
-      }
-      if (args.length == 3) {
-        return graphClass.getConstructor(String.class, String.class, String.class).newInstance(first, args[1], args[2]);
-      } else {
-        return graphClass.getConstructor(String.class).newInstance(first);
+        args[0] = first;
       }
 
+      return findMatchingCtor(graphClass, args).newInstance(args);
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
@@ -60,5 +54,10 @@ public class OrientDbLoader implements GraphLoader {
   @Override
   public String getName() {
     return NAME;
+  }
+
+  @Override
+  public boolean isSupported() {
+    return isClassAvailable(NAME) && isClassAvailable(bpOrient);
   }
 }

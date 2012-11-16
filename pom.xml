@@ -246,6 +246,7 @@
             <manifestEntries>
               <Build-Timestamp>${maven.build.timestamp}</Build-Timestamp>
               <Build-Version>${project.version}</Build-Version>
+              <Class-Path>neo4j.jar lib/neo4j.jar blueprints-neo4j.jar lib/blueprints-neo4j.jar</Class-Path>
             </manifestEntries>
           </archive>
         </configuration>
