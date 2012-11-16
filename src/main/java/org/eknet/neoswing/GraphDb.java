@@ -39,6 +39,10 @@ public class GraphDb {
     this.db = db;
   }
 
+  public Graph getDelegate() {
+    return db;
+  }
+
   public String getName() {
     return db.toString();
   }

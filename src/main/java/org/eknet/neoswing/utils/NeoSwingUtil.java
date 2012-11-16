@@ -20,6 +20,7 @@ import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.Element;
 import com.tinkerpop.blueprints.Vertex;
+import com.tinkerpop.blueprints.util.ElementHelper;
 import edu.uci.ics.jung.graph.Graph;
 import edu.uci.ics.jung.graph.util.EdgeType;
 import org.eknet.neoswing.ComponentFactory;
@@ -27,6 +28,7 @@ import org.eknet.neoswing.DefaultComponentFactory;
 import org.eknet.neoswing.ElementId;
 import org.eknet.neoswing.GraphModel;
 import org.eknet.neoswing.JideComponentFactory;
+import org.eknet.neoswing.NeoSwing;
 import org.eknet.neoswing.loader.Neo4JEmbeddedLoader;
 import org.eknet.neoswing.loader.OrientDbLoader;
 import org.eknet.neoswing.loader.TitanLoader;
@@ -36,6 +38,7 @@ import org.slf4j.LoggerFactory;
 import javax.swing.Action;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
+import javax.swing.JFileChooser;
 import javax.swing.border.Border;
 import java.awt.Component;
 import java.awt.Graphics;
@@ -43,9 +46,12 @@ import java.awt.Image;
 import java.awt.Insets;
 import java.awt.Window;
 import java.awt.event.ActionEvent;
+import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.util.EventObject;
 import java.util.Properties;
+import java.util.prefs.Preferences;
 
 /**
  * @author <a href="mailto:eike.kettner@gmail.com">Eike Kettner</a>
@@ -53,7 +59,8 @@ import java.util.Properties;
  */
 public final class NeoSwingUtil {
   private static final Logger log = LoggerFactory.getLogger(NeoSwingUtil.class);
-  
+  private final static Preferences prefs = Preferences.userNodeForPackage(NeoSwing.class);
+
   private static boolean jideAvailable;
   private static Properties neoswingProperties = new Properties();
   
@@ -219,7 +226,11 @@ public final class NeoSwingUtil {
 
   public static Window findOwner(Object component) {
     if (!(component instanceof Component)) {
-      return null;
+      if (component instanceof EventObject) {
+        return findOwner(((EventObject) component).getSource());
+      } else {
+        return null;
+      }
     }
     Component c = (Component) component;
     while (c != null) {
@@ -255,6 +266,45 @@ public final class NeoSwingUtil {
       return false;
     }
     return pc1.equals(pc2);
+  }
+
+  /**
+   * Copies the vertices and edges from new JUNG graph view into the given blueprints graph.
+   * Note that this must be called inside a transaction.
+   * @param view
+   * @return
+   */
+  public static void copyView(Graph<Vertex, Edge> view, com.tinkerpop.blueprints.Graph to) {
+    for (Vertex v : view.getVertices()) {
+      Vertex tv = to.addVertex(v.getId());
+      ElementHelper.copyProperties(v, tv);
+    }
+    for (final Edge fromEdge : view.getEdges()) {
+      final Vertex outVertex = to.getVertex(fromEdge.getVertex(Direction.OUT).getId());
+      final Vertex inVertex = to.getVertex(fromEdge.getVertex(Direction.IN).getId());
+      final Edge toEdge = to.addEdge(fromEdge.getId(), outVertex, inVertex, fromEdge.getLabel());
+      ElementHelper.copyProperties(fromEdge, toEdge);
+    }
+  }
+
+  public static <B> B chooseSingleFile(Object ownerComp, String title, Function<File, B> fun) {
+    final String key = "neoswing." + title.replaceAll("\\s+", "") + ".lastlocation";
+    String lastLocation = prefs.get(key, null);
+    JFileChooser fc = new JFileChooser(lastLocation);
+    fc.setDialogTitle(title);
+    fc.setAcceptAllFileFilterUsed(false);
+    fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
+    fc.setMultiSelectionEnabled(false);
+    Window owner = findOwner(ownerComp);
+    int rc = fc.showOpenDialog(owner);
+    if (rc == JFileChooser.APPROVE_OPTION) {
+      final File f = fc.getSelectedFile();
+      if (f == null) {
+        return null;
+      }
+      return fun.apply(f);
+    }
+    return null;
   }
 
   // ~~ code below is copied from cru-swing class SwingUtil

@@ -21,15 +21,29 @@ import com.tinkerpop.blueprints.Vertex;
 import edu.uci.ics.jung.graph.Graph;
 import edu.uci.ics.jung.visualization.GraphZoomScrollPane;
 import edu.uci.ics.jung.visualization.VisualizationViewer;
-import org.eknet.neoswing.*;
+import org.eknet.neoswing.ComponentFactory;
+import org.eknet.neoswing.DbAction;
+import org.eknet.neoswing.GraphDb;
+import org.eknet.neoswing.GraphModel;
+import org.eknet.neoswing.LayoutComboModel;
+import org.eknet.neoswing.Layouts;
+import org.eknet.neoswing.VisualizationViewFactory;
 import org.eknet.neoswing.actions.AddNodeAction;
+import org.eknet.neoswing.actions.ExportAction;
+import org.eknet.neoswing.actions.ImportAction;
 import org.eknet.neoswing.actions.ResetAction;
 import org.eknet.neoswing.actions.SearchAction;
 import org.eknet.neoswing.utils.NeoSwingUtil;
 import org.eknet.neoswing.utils.SimpleGraphModel;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.JButton;
+import javax.swing.JComboBox;
+import javax.swing.JPanel;
+import javax.swing.JToolBar;
+import java.awt.BorderLayout;
+import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
@@ -42,7 +56,7 @@ import java.awt.event.ActionListener;
  *   <li>add new nodes</li>
  *   <li>reset the graph</li>
  *   <li>change layout</li>
- *   <li>find nodes/relationships via index search</li>
+ *   <li>find nodes/relationships via key-value search</li>
  * </ul>
  *
  * @author <a href="mailto:eike.kettner@gmail.com">Eike Kettner</a>
@@ -109,6 +123,20 @@ public class GraphPanel extends JPanel implements GraphModel {
     JButton findButton = factory.createToolbarButton();
     findButton.setAction(new SearchAction(graphModel));
     bar.add(findButton);
+
+    //export graph
+    JButton export1 = factory.createToolbarButton();
+    export1.setAction(new ExportAction(graphModel, true));
+    bar.add(export1);
+    JButton export2 = factory.createToolbarButton();
+    export2.setAction(new ExportAction(graphModel, false));
+    bar.add(export2);
+
+    //import graph
+    JButton importMl = factory.createToolbarButton();
+    importMl.setAction(new ImportAction(graphModel));
+    bar.add(importMl);
+
     return bar;
   }
 

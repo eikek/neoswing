@@ -20,7 +20,7 @@ import org.eknet.neoswing.utils.Dialogs;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.swing.*;
+import javax.swing.SwingWorker;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -58,7 +58,7 @@ public abstract class DbAction<A, B> extends SwingWorker<A, B> {
     }
   }
 
-  protected abstract A doInTx(GraphModel model);
+  protected abstract A doInTx(GraphModel model) throws Exception;
 
   protected A safeGet() {
     try {
