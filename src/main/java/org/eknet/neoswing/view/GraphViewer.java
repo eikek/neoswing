@@ -26,7 +26,6 @@ import org.eknet.neoswing.DbAction;
 import org.eknet.neoswing.ElementId;
 import org.eknet.neoswing.GraphDb;
 import org.eknet.neoswing.GraphModel;
-import org.eknet.neoswing.NeoSwing;
 import org.eknet.neoswing.utils.NeoSwingUtil;
 import org.eknet.neoswing.utils.WindowUtil;
 import org.eknet.neoswing.view.control.SelectElementMousePlugin;
@@ -39,7 +38,6 @@ import java.awt.Dimension;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.prefs.Preferences;
 
 /**
  * Combines the {@link GraphPanel} view with a property editor.
@@ -48,8 +46,6 @@ import java.util.prefs.Preferences;
  * @since 11.01.12 20:32
  */
 public class GraphViewer extends JPanel implements GraphModel {
-
-  private static final Preferences prefs = Preferences.userNodeForPackage(NeoSwing.class);
 
   private final GraphPanel graphPanel;
   private final ComponentFactory componentFactory;
@@ -106,7 +102,7 @@ public class GraphViewer extends JPanel implements GraphModel {
     vsplit.setOneTouchExpandable(true);
     vsplit.setContinuousLayout(true);
     vsplit.setDividerLocation(-1);
-    WindowUtil.bindDividerLocationToPrefs(vsplit, prefs, "graphviewer.vsplit.%s");
+    WindowUtil.bindDividerLocationToPrefs(vsplit, NeoSwingUtil.getPrefs(), "graphviewer.vsplit.%s");
 
     JPanel right = componentFactory.createPanel();
     right.setLayout(new BorderLayout());
@@ -120,7 +116,7 @@ public class GraphViewer extends JPanel implements GraphModel {
     msplit.setContinuousLayout(true);
     msplit.setOneTouchExpandable(true);
     msplit.setDividerLocation(-1);
-    WindowUtil.bindDividerLocationToPrefs(vsplit, prefs, "graphviewer.msplit.%s");
+    WindowUtil.bindDividerLocationToPrefs(vsplit, NeoSwingUtil.getPrefs(), "graphviewer.msplit.%s");
     graphPanel.setPreferredSize(new Dimension(900, 900));
     add(msplit, BorderLayout.CENTER);
   }

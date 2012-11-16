@@ -28,7 +28,6 @@ import edu.uci.ics.jung.visualization.renderers.VertexLabelAsShapeRenderer;
 import org.apache.commons.collections15.Transformer;
 import org.eknet.neoswing.GraphDb;
 import org.eknet.neoswing.GraphModel;
-import org.eknet.neoswing.NeoSwing;
 import org.eknet.neoswing.VisualizationViewFactory;
 import org.eknet.neoswing.utils.NeoSwingUtil;
 import org.eknet.neoswing.utils.SimpleGraphModel;
@@ -44,7 +43,6 @@ import java.awt.Shape;
 import java.awt.event.MouseEvent;
 import java.awt.geom.RoundRectangle2D;
 import java.util.WeakHashMap;
-import java.util.prefs.Preferences;
 
 /**
  * @author <a href="mailto:eike.kettner@gmail.com">Eike Kettner</a>
@@ -53,7 +51,6 @@ import java.util.prefs.Preferences;
 public class DefaultVisualizationViewFactory implements VisualizationViewFactory {
   private static final Logger log = LoggerFactory.getLogger(DefaultVisualizationViewFactory.class);
 
-  private final static Preferences prefs = Preferences.userNodeForPackage(NeoSwing.class);
   private final static String labelKeyFormat = "defaultlabel.%s.%s.%s";
 
   public static String createDefaultLabelPrefKey(Element container, GraphDb db) {
@@ -153,7 +150,7 @@ public class DefaultVisualizationViewFactory implements VisualizationViewFactory
         try {
           Vertex v = model.getDatabase().lookupVertex(vertex.getId());
           final String key = createDefaultLabelPrefKey(v, model.getDatabase());
-          String label = prefs.get(key, null);
+          String label = NeoSwingUtil.getPrefs().get(key, null);
           if (label != null && v.getProperty(label) != null) {
             s = v.getId() + ": " + v.getProperty(label).toString();
             cache.put(vertex.getId(), s);

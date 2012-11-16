@@ -77,7 +77,9 @@ public final class NeoSwingUtil {
     }
   }
 
-  
+  public static Preferences getPrefs() {
+    return prefs;
+  }
   
   private NeoSwingUtil() {}
 

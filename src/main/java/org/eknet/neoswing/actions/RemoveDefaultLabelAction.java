@@ -20,20 +20,17 @@ import com.tinkerpop.blueprints.Element;
 import org.eknet.neoswing.DbAction;
 import org.eknet.neoswing.ElementId;
 import org.eknet.neoswing.GraphModel;
-import org.eknet.neoswing.NeoSwing;
+import org.eknet.neoswing.utils.NeoSwingUtil;
 import org.eknet.neoswing.view.DefaultVisualizationViewFactory;
 
 import javax.swing.AbstractAction;
 import java.awt.event.ActionEvent;
-import java.util.prefs.Preferences;
 
 /**
  * @author <a href="mailto:eike.kettner@gmail.com">Eike Kettner</a>
  * @since 12.01.12 18:44
  */
 public class RemoveDefaultLabelAction extends AbstractAction {
-
-  private final static Preferences prefs = Preferences.userNodeForPackage(NeoSwing.class);
 
   private final GraphModel model;
   private ElementId<?> element;
@@ -60,7 +57,7 @@ public class RemoveDefaultLabelAction extends AbstractAction {
       protected Object doInTx(GraphModel model) {
         Element el = model.getDatabase().lookup(element);
         String key = DefaultVisualizationViewFactory.createDefaultLabelPrefKey(el, model.getDatabase());
-        prefs.remove(key);
+        NeoSwingUtil.getPrefs().remove(key);
         return null;
       }
     });

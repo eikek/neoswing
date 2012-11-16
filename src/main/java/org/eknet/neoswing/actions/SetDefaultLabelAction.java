@@ -20,11 +20,10 @@ import com.tinkerpop.blueprints.Element;
 import org.eknet.neoswing.DbAction;
 import org.eknet.neoswing.ElementId;
 import org.eknet.neoswing.GraphModel;
-import org.eknet.neoswing.NeoSwing;
+import org.eknet.neoswing.utils.NeoSwingUtil;
 import org.eknet.neoswing.view.DefaultVisualizationViewFactory;
 
 import java.awt.event.ActionEvent;
-import java.util.prefs.Preferences;
 
 /**
  * @author <a href="mailto:eike.kettner@gmail.com">Eike Kettner</a>
@@ -32,8 +31,6 @@ import java.util.prefs.Preferences;
  */
 public class SetDefaultLabelAction extends AbstractSwingAction {
   
-  private final static Preferences prefs = Preferences.userNodeForPackage(NeoSwing.class);
-
   private final GraphModel model;
 
   private ElementId<?> element;
@@ -61,7 +58,7 @@ public class SetDefaultLabelAction extends AbstractSwingAction {
       protected Object doInTx(GraphModel model) {
         Element el = model.getDatabase().lookup(element);
         String prefKey = DefaultVisualizationViewFactory.createDefaultLabelPrefKey(el, getModel().getDatabase());
-        prefs.put(prefKey, key);
+        NeoSwingUtil.getPrefs().put(prefKey, key);
         return null;
       }
     });

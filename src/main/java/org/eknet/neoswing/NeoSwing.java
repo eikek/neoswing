@@ -21,10 +21,12 @@ import org.eknet.neoswing.utils.NeoSwingUtil;
 import org.eknet.neoswing.utils.WindowUtil;
 import org.eknet.neoswing.view.MultiGraphViewer;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JFrame;
+import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
+import javax.swing.WindowConstants;
+import java.awt.BorderLayout;
 import java.lang.reflect.InvocationTargetException;
-import java.util.prefs.Preferences;
 
 /**
  * @author <a href="mailto:eike.kettner@gmail.com">Eike Kettner</a>
@@ -34,8 +36,6 @@ public class NeoSwing {
 
   protected JFrame frame;
   private final ComponentFactory componentFactory;
-
-  private final static Preferences prefs = Preferences.userNodeForPackage(NeoSwing.class);
 
   private MultiGraphViewer browser;
 
@@ -61,7 +61,7 @@ public class NeoSwing {
     frame.getContentPane().add(browser, BorderLayout.CENTER);
 
     frame.setSize(1027, 800);
-    WindowUtil.bindToPrefs(frame, prefs, "neoswing.main.%s");
+    WindowUtil.bindToPrefs(frame, NeoSwingUtil.getPrefs(), "neoswing.main.%s");
   }
 
   /**

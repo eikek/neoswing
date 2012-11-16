@@ -18,7 +18,6 @@ package org.eknet.neoswing.view;
 
 import org.eknet.neoswing.ComponentFactory;
 import org.eknet.neoswing.GraphDb;
-import org.eknet.neoswing.NeoSwing;
 import org.eknet.neoswing.loader.GraphLoaderManager;
 import org.eknet.neoswing.utils.Dialogs;
 import org.eknet.neoswing.utils.NeoSwingUtil;
@@ -42,7 +41,6 @@ import java.awt.Dimension;
 import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.io.File;
-import java.util.prefs.Preferences;
 
 /**
  * Organizes {@link GraphViewer}s in a tabbed pane.
@@ -52,7 +50,6 @@ import java.util.prefs.Preferences;
  */
 public class MultiGraphViewer extends JPanel {
   private final static Logger log = LoggerFactory.getLogger(MultiGraphViewer.class);
-  private final static Preferences prefs = Preferences.userNodeForPackage(NeoSwing.class);
 
   private final GraphLoaderManager loaderManager;
   private final ComponentFactory factory;
@@ -154,7 +151,7 @@ public class MultiGraphViewer extends JPanel {
     @Override
     public void actionPerformed(ActionEvent e) {
       final String key = "neoswing.multigraphview.lastlocation";
-      String lastLocation = prefs.get(key, null);
+      String lastLocation = NeoSwingUtil.getPrefs().get(key, null);
       JFileChooser fc = new JFileChooser(lastLocation);
       fc.setDialogTitle("Open Database");
       fc.setAcceptAllFileFilterUsed(false);
@@ -174,7 +171,7 @@ public class MultiGraphViewer extends JPanel {
           return;
         }
         try {
-          prefs.put(key, fc.getSelectedFile().getAbsolutePath());
+          NeoSwingUtil.getPrefs().put(key, fc.getSelectedFile().getAbsolutePath());
           openDatabase(name, fc.getSelectedFile());
         } catch (IllegalArgumentException error) {
           Dialogs.error(owner, error.getMessage());
