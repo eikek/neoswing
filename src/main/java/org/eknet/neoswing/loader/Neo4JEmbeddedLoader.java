@@ -51,9 +51,11 @@ public class Neo4JEmbeddedLoader extends AbstractGraphLoader {
     try {
       checkDirectory(new File((String) args[0]));
       Class neodbClass = classLoader.loadClass(NAME);
+      //noinspection unchecked
       Object neodb = findMatchingCtor(neodbClass, args).newInstance(args);
 
       Class<?> arg = classLoader.loadClass(neoGraphDb);
+      //noinspection unchecked
       Class<? extends Graph> graphClass = (Class<? extends Graph>) classLoader.loadClass(bpName);
       return graphClass.getConstructor(arg).newInstance(neodb);
     } catch (Exception e) {

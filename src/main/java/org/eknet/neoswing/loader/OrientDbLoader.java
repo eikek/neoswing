@@ -18,6 +18,9 @@ package org.eknet.neoswing.loader;
 
 import com.tinkerpop.blueprints.Graph;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * @author <a href="mailto:eike.kettner@gmail.com">Eike Kettner</a>
  * @since 14.11.12 22:57
@@ -27,6 +30,13 @@ public class OrientDbLoader extends AbstractGraphLoader {
   public static final String NAME = "com.orientechnologies.orient.core.db.graph.OGraphDatabase";
 
   private static final String bpOrient = "com.tinkerpop.blueprints.impls.orient.OrientGraph";
+
+  //http://code.google.com/p/orient/wiki/Concepts#Database_URL
+  private static final List<String> orientdbSchemes = new ArrayList<String>() {{
+    add("local:");
+    add("memory:");
+    add("remote:");
+  }};
 
   public OrientDbLoader(ClassLoader classLoader) {
     super(classLoader);
@@ -38,11 +48,13 @@ public class OrientDbLoader extends AbstractGraphLoader {
   @Override
   public Graph loadGraph(Object... args) {
     try {
+      //noinspection unchecked
       Class<? extends Graph> graphClass = (Class<? extends Graph>) classLoader.loadClass(bpOrient);
       Object first = args[0];
       if (first instanceof String) {
-        first = "local:" + first;
-        args[0] = first;
+        if (!hasScheme((String) first)) {
+          args[0] = orientdbSchemes.get(0) + first;
+        }
       }
 
       return findMatchingCtor(graphClass, args).newInstance(args);
@@ -59,5 +71,14 @@ public class OrientDbLoader extends AbstractGraphLoader {
   @Override
   public boolean isSupported() {
     return isClassAvailable(NAME) && isClassAvailable(bpOrient);
+  }
+
+  private static boolean hasScheme(String url) {
+    for (String scheme : orientdbSchemes) {
+      if (url.trim().startsWith(scheme)) {
+        return true;
+      }
+    }
+    return false;
   }
 }
