@@ -25,8 +25,21 @@ import org.eknet.neoswing.utils.NeoSwingUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.AbstractAction;
+import javax.swing.Box;
+import javax.swing.Icon;
+import javax.swing.JButton;
+import javax.swing.JComboBox;
+import javax.swing.JFileChooser;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JTabbedPane;
+import javax.swing.JToolBar;
+import javax.swing.SwingConstants;
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.io.File;
 import java.util.prefs.Preferences;
@@ -82,6 +95,11 @@ public class MultiGraphViewer extends JPanel {
       openButton.setAction(new OpenDatabaseAction(name));
       bar.add(openButton);
     }
+
+    bar.add(Box.createHorizontalGlue());
+    JComboBox lafbox = new LaFComboBox(factory).getComponent();
+    lafbox.setMaximumSize(new Dimension(250, lafbox.getMaximumSize().height));
+    bar.add(lafbox);
 
     return bar;
   }

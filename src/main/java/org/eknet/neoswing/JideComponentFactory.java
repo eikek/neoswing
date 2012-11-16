@@ -16,9 +16,25 @@
 
 package org.eknet.neoswing;
 
-import com.jidesoft.swing.*;
+import com.jidesoft.plaf.LookAndFeelFactory;
+import com.jidesoft.swing.AutoCompletionComboBox;
+import com.jidesoft.swing.ButtonStyle;
+import com.jidesoft.swing.JideButton;
+import com.jidesoft.swing.JideComboBox;
+import com.jidesoft.swing.JideMenu;
+import com.jidesoft.swing.JidePopupMenu;
+import com.jidesoft.swing.JideSplitButton;
+import com.jidesoft.swing.JideTabbedPane;
 
-import javax.swing.*;
+import javax.swing.Action;
+import javax.swing.DefaultComboBoxModel;
+import javax.swing.JButton;
+import javax.swing.JComboBox;
+import javax.swing.JComponent;
+import javax.swing.JMenu;
+import javax.swing.JPopupMenu;
+import javax.swing.JTabbedPane;
+import javax.swing.UIManager;
 
 /**
  * @author <a href="mailto:eike.kettner@gmail.com">Eike Kettner</a>
@@ -79,6 +95,17 @@ public class JideComponentFactory extends DefaultComponentFactory implements Com
   @Override
   public JPopupMenu createPopupMenu() {
     return new JidePopupMenu();
+  }
+
+  @Override
+  public JMenu createMenu() {
+    return new JideMenu();
+  }
+
+  @Override
+  public void updateLookAndFeel(UIManager.LookAndFeelInfo info) {
+    super.updateLookAndFeel(info);
+    LookAndFeelFactory.installJideExtension();
   }
 
   @Override

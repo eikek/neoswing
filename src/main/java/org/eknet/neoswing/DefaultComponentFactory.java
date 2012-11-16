@@ -16,7 +16,24 @@
 
 package org.eknet.neoswing;
 
-import javax.swing.*;
+import javax.swing.Action;
+import javax.swing.DefaultComboBoxModel;
+import javax.swing.JButton;
+import javax.swing.JComboBox;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JMenu;
+import javax.swing.JMenuItem;
+import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
+import javax.swing.JSplitPane;
+import javax.swing.JTabbedPane;
+import javax.swing.JTable;
+import javax.swing.JTextField;
+import javax.swing.JToolBar;
+import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
+import java.awt.Window;
 
 /**
  * @author <a href="mailto:eike.kettner@gmail.com">Eike Kettner</a>
@@ -107,6 +124,18 @@ public class DefaultComponentFactory implements ComponentFactory {
   @Override
   public JPopupMenu createPopupMenu() {
     return new JPopupMenu();
+  }
+
+  @Override
+  public JMenu createMenu() {
+    return new JMenu();
+  }
+
+  @Override
+  public void updateLookAndFeel(UIManager.LookAndFeelInfo info) {
+    for (Window win : Window.getWindows()) {
+      SwingUtilities.updateComponentTreeUI(win);
+    }
   }
 
   @Override

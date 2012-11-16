@@ -26,7 +26,6 @@ import edu.uci.ics.jung.visualization.control.DefaultModalGraphMouse;
 import edu.uci.ics.jung.visualization.renderers.Renderer;
 import edu.uci.ics.jung.visualization.renderers.VertexLabelAsShapeRenderer;
 import org.apache.commons.collections15.Transformer;
-import org.eknet.neoswing.DbAction;
 import org.eknet.neoswing.GraphDb;
 import org.eknet.neoswing.GraphModel;
 import org.eknet.neoswing.NeoSwing;
@@ -45,7 +44,6 @@ import java.awt.Shape;
 import java.awt.event.MouseEvent;
 import java.awt.geom.RoundRectangle2D;
 import java.util.WeakHashMap;
-import java.util.concurrent.TimeUnit;
 import java.util.prefs.Preferences;
 
 /**
@@ -151,32 +149,23 @@ public class DefaultVisualizationViewFactory implements VisualizationViewFactory
       String s = cache.get(vertex.getId());
       if (s == null) {
         s = "<null>";
-        log.info(">> cache is null: " + vertex);
-        DbAction<String, Object> action = new DbAction<String, Object>() {
-          @Override
-          protected String doInTx(GraphModel model) {
-            Vertex v = model.getDatabase().lookupVertex(vertex.getId());
-            final String key = createDefaultLabelPrefKey(v, model.getDatabase());
-            String label = prefs.get(key, null);
-            if (label != null) {
-              if (v.getProperty(label) != null) {
-                return v.getId() + ": " + v.getProperty(label).toString();
-              }
-            }
-            if (v.getProperty("name") != null) {
-              return v.getId() + ": " + v.getProperty("name");
-            }
-            return v.toString();
-          }
-        };
-        model.execute(action);
+        GraphDb.Tx tx = model.getDatabase().beginTx();
         try {
-          s = action.get(5, TimeUnit.SECONDS);
-          cache.put(vertex.getId(), s);
-        } catch (InterruptedException e) {
-          Thread.currentThread().interrupt();
-        } catch (Exception e) {
-          log.error("Error obtaining vertex label", e);
+          Vertex v = model.getDatabase().lookupVertex(vertex.getId());
+          final String key = createDefaultLabelPrefKey(v, model.getDatabase());
+          String label = prefs.get(key, null);
+          if (label != null && v.getProperty(label) != null) {
+            s = v.getId() + ": " + v.getProperty(label).toString();
+            cache.put(vertex.getId(), s);
+          } else  if (v.getProperty("name") != null) {
+            s = v.getId() + ": " + v.getProperty("name");
+            cache.put(vertex.getId(), s);
+          } else {
+            s = v.toString();
+          }
+          tx.success();
+        } finally {
+          tx.finish();
         }
       }
       return s;
