@@ -236,7 +236,7 @@ public class PropertiesPanel extends JPanel {
         return entry.key;
       }
       if (columnIndex == 1) {
-        return entry.value.toString();
+        return entry.value + "";
       }
       return null;
     }
